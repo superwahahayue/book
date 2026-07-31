@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}新建小说 · 小说生成器{% endblock %}
+{% block content %}
+<h1>新建小说</h1>
+<p class="page-lead">填写基本信息后，系统将自动生成大纲与首章。</p>
+
+<div class="card">
+<form id="create-form" class="form">
+  <label>标题 *
+    <input name="title" required maxlength="255" placeholder="例如：山海拾遗录">
+  </label>
+  <div class="row">
+    <label>题材 / 类型
+      <input name="genre" placeholder="例如：东方玄幻、悬疑、都市">
+    </label>
+    <label>写作风格
+      <input name="style" placeholder="例如：文笔细腻、节奏明快">
+    </label>
+  </div>
+  <label>故事简介
+    <textarea name="premise" rows="3" placeholder="一句话或一段话概括故事核心（可留空）"></textarea>
+  </label>
+  <label>人物 / 世界观设定
+    <textarea name="settings" rows="4" placeholder="主要人物、关系、世界观规则等（可留空）"></textarea>
+  </label>
+
+  <div class="row">
+    <label>模型提供方
+      <select name="provider" id="provider-select">
+        {% for p in providers %}
+        <option value="{{ p.name }}" {% if not p.available %}disabled{% endif %}>
+          {{ p.label }}{% if not p.available %}(未配置){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>模型名（留空用默认）
+      <input name="model" id="model-input" placeholder="">
+    </label>
+    <label>自动续写间隔（分钟）
+      <input name="interval_minutes" type="number" min="1" value="360">
+    </label>
+  </div>
+
+  <div class="form-submit">
+    <button type="submit" id="submit-btn" class="btn-primary">创建并开始生成</button>
+    <span class="hint">创建后会在后台自动生成大纲与第 1 章。</span>
+  </div>
+  <p id="form-error" class="error" hidden></p>
+</form>
+</div>
+
+<script>
+  const providerMeta = {
+    {% for p in providers %}"{{ p.name }}": "{{ p.default_model }}",{% endfor %}
+  };
+  const sel = document.getElementById("provider-select");
+  const modelInput = document.getElementById("model-input");
+  function updatePlaceholder() {
+    modelInput.placeholder = "默认: " + (providerMeta[sel.value] || "");
+  }
+  sel.addEventListener("change", updatePlaceholder);
+  updatePlaceholder();
+
+  document.getElementById("create-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const payload = Object.fromEntries(fd.entries());
+    payload.interval_minutes = parseInt(payload.interval_minutes || "360", 10);
+    if (!payload.model) delete payload.model;
+    const errEl = document.getElementById("form-error");
+    const submitBtn = document.getElementById("submit-btn");
+    errEl.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "创建中…";
+    try {
+      const res = await fetch("/api/novels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || ("创建失败: " + res.status));
+      }
+      const novel = await res.json();
+      window.location.href = "/novels/" + novel.id;
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = "创建并开始生成";
+    }
+  });
+</script>
+{% endblock %}

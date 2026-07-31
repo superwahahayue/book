@@ -1,0 +1,216 @@
+:root {
+  --bg: #f5f3ee;
+  --panel: #ffffff;
+  --ink: #2b2b2b;
+  --muted: #8a8a8a;
+  --accent: #7c5cff;
+  --accent-dark: #5a3fd6;
+  --danger: #d9534f;
+  --danger-dark: #b52b27;
+  --success: #2e7d32;
+  --border: #e3ddd2;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.75;
+  font-size: 15px;
+}
+
+/* ── Top bar ─────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+.brand { font-weight: 700; font-size: 1.1rem; text-decoration: none; color: var(--ink); }
+.topbar nav { display: flex; align-items: center; gap: 0.5rem; }
+.topbar nav a { text-decoration: none; color: var(--muted); font-size: 0.9rem; }
+.topbar nav a:hover { color: var(--ink); }
+
+.container { max-width: 900px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
+
+/* ── Typography ─────────────────────────── */
+h1 { font-size: 1.7rem; margin: 0 0 0.25rem; }
+h2 { font-size: 1.1rem; margin: 0 0 1rem; }
+a { color: var(--accent-dark); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.hint { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0; }
+.error { color: var(--danger); font-size: 0.9rem; }
+.muted { color: var(--muted); }
+.empty { color: var(--muted); }
+
+/* ── Buttons ─────────────────────────────── */
+button, .btn, .btn-primary, .btn-secondary, .btn-danger {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  border-radius: 6px; padding: 0.45rem 0.95rem;
+  cursor: pointer; font-size: 0.9rem; font-family: inherit;
+  transition: background .15s, opacity .15s, color .15s;
+  white-space: nowrap; text-decoration: none;
+  border: 1px solid transparent;
+}
+button, .btn, .btn-primary {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+button:hover, .btn:hover, .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); text-decoration: none; }
+button:disabled { opacity: .4; cursor: not-allowed; }
+.btn-secondary {
+  background: transparent; color: var(--ink); border-color: var(--border);
+}
+.btn-secondary:hover { background: var(--bg); text-decoration: none; }
+.btn-danger {
+  background: transparent; color: var(--danger); border-color: var(--danger);
+}
+.btn-danger:hover { background: var(--danger); color: #fff; text-decoration: none; }
+
+/* ── Badges ──────────────────────────────── */
+.badge {
+  display: inline-block; padding: 0.15rem 0.6rem;
+  border-radius: 20px; font-size: 0.78rem; font-weight: 500;
+}
+.badge.ok  { background: #e8f5e9; color: #2e7d32; }
+.badge.gen { background: #fff8e1; color: #e65100; }
+.badge.err { background: #fce4ec; color: #c62828; }
+
+/* ── Library ─────────────────────────────── */
+.library-header {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 1rem;
+}
+.novel-list {
+  width: 100%; border-collapse: collapse;
+  background: var(--panel); border-radius: var(--radius);
+  overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.novel-list th, .novel-list td {
+  padding: 0.7rem 1rem; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.novel-list tbody tr:last-child td { border-bottom: none; }
+.novel-list th {
+  background: #f0ece3; font-weight: 600;
+  font-size: 0.82rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.novel-list tbody tr:hover { background: #faf8f4; }
+
+/* ── Forms (create page) ─────────────────── */
+.form label { display: block; margin: 0.85rem 0; font-size: 0.88rem; color: var(--muted); font-weight: 500; }
+.form label > input,
+.form label > textarea,
+.form label > select { display: block; width: 100%; margin-top: 0.3rem; }
+.form input, .form textarea, .form select,
+input.field, textarea.field, select.field {
+  padding: 0.5rem 0.7rem; font-size: 0.95rem; font-family: inherit;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: #fff; color: var(--ink);
+  transition: border-color .15s, box-shadow .15s;
+  width: 100%;
+}
+input.field:focus, textarea.field:focus, select.field:focus,
+.form input:focus, .form textarea:focus, .form select:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124,92,255,.1);
+}
+.form .row { display: flex; gap: 1rem; }
+.form .row label { flex: 1; }
+.form-submit { display: flex; align-items: center; gap: 1rem; margin-top: 1.4rem; }
+
+/* ── Cards ───────────────────────────────── */
+.card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.2rem 1.4rem; margin: 0.8rem 0;
+}
+
+/* ── Novel header ────────────────────────── */
+.novel-header { margin-bottom: 0.5rem; }
+.novel-header h1 { margin-bottom: 0.3rem; }
+.meta {
+  display: flex; flex-wrap: wrap; gap: 0.25rem 0.6rem;
+  align-items: center; color: var(--muted); font-size: 0.9rem; margin: 0.3rem 0;
+}
+.meta-dot::before { content: "·"; }
+
+/* ── Controls grid ───────────────────────── */
+.controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+}
+@media (max-width: 620px) { .controls-grid { grid-template-columns: 1fr; } }
+
+.panel-label {
+  font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted); margin: 0 0 0.9rem;
+}
+.ctrl-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.65rem; }
+.ctrl-row:last-child { margin-bottom: 0; }
+.inline-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; white-space: nowrap; }
+.inline-label input[type="number"] { width: 5em; padding: 0.3rem 0.4rem; border: 1px solid var(--border); border-radius: 5px; font-size: 0.88rem; }
+.inline-label input[type="text"]   { padding: 0.3rem 0.5rem; border: 1px solid var(--border); border-radius: 5px; font-size: 0.88rem; width: 120px; }
+.inline-label select { padding: 0.3rem 0.4rem; border: 1px solid var(--border); border-radius: 5px; font-size: 0.88rem; max-width: 200px; }
+.save-msg { font-size: 0.85rem; color: var(--muted); min-height: 1.2em; display: inline-block; }
+.save-msg.ok  { color: var(--success); }
+.save-msg.err { color: var(--danger); }
+
+/* ── Editable sections ───────────────────── */
+.edit-section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); margin: 0.75rem 0; overflow: hidden;
+}
+.edit-section > summary {
+  cursor: pointer; font-weight: 600; font-size: 0.95rem;
+  list-style: none; display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.9rem 1.3rem; user-select: none;
+  background: var(--panel);
+}
+.edit-section > summary::-webkit-details-marker { display: none; }
+.edit-section > summary::before {
+  content: "▶"; font-size: 0.65rem; color: var(--muted);
+  transition: transform .2s; flex-shrink: 0;
+}
+.edit-section[open] > summary::before { transform: rotate(90deg); }
+.edit-section-body { padding: 0 1.3rem 1.3rem; border-top: 1px solid var(--border); }
+
+.field-label {
+  display: block; font-size: 0.85rem; color: var(--muted);
+  font-weight: 500; margin: 0.9rem 0 0.3rem;
+}
+.field-label:first-child { margin-top: 0.9rem; }
+.form-row { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+.form-row > div { flex: 1; min-width: 140px; }
+
+.section-actions { display: flex; align-items: center; gap: 0.8rem; margin-top: 1rem; }
+
+/* ── Chapters ────────────────────────────── */
+.chapters { margin-top: 1.5rem; }
+.chapters-header {
+  display: flex; align-items: baseline; gap: 0.6rem;
+  border-bottom: 1px solid var(--border); padding-bottom: 0.6rem; margin-bottom: 1rem;
+}
+.chapters-header h2 { margin: 0; }
+.chapter {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.4rem 1.8rem; margin: 0.9rem 0;
+}
+.chapter h3 { margin: 0 0 1rem; font-size: 1rem; color: var(--muted); font-weight: 600; }
+.chapter-body { font-size: 1.06rem; line-height: 2; color: #2e2e2e; }
+.chapter-body p { margin: 0 0 1em; }
+
+/* ── Create page ─────────────────────────── */
+.page-lead { color: var(--muted); margin: 0.2rem 0 1.2rem; }

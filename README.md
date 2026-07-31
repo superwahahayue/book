@@ -44,7 +44,9 @@ cp .env.example .env
 
 | 变量 | 说明 |
 |------|------|
-| `DEFAULT_PROVIDER` | `ollama` / `openai` / `anthropic` |
+| `DEFAULT_PROVIDER` | `gemini` / `ollama` / `openai` / `anthropic` |
+| `GEMINI_BASE_URL` / `GEMINI_API_KEY` | Gemini 代理地址与密钥 |
+| `GEMINI_DEFAULT_MODEL` | 默认 Gemini 模型 ID |
 | `OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` | 本地 Ollama |
 | `OPENAI_*` / `ANTHROPIC_*` | 线上 API |
 | `CHAPTER_TARGET_CHARS` | 每节点目标字数（默认 2000） |

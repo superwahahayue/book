@@ -1,0 +1,25 @@
+# Secrets and durable server state
+.env
+data/
+*.db
+*.sqlite3
+
+# Local dependencies and build output
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+frontend/node_modules/
+frontend/dist/
+
+# Source-control and local tooling
+.git/
+.trellis/
+.agents/
+.claude/
+.cursor/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

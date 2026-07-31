@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}书库 · 小说生成器{% endblock %}
+{% block content %}
+<div class="library-header">
+  <h1>书库</h1>
+</div>
+{% if not novels %}
+  <div class="card" style="text-align:center;padding:2.5rem 1.5rem">
+    <p style="color:var(--muted);font-size:1.05rem;margin:0 0 1.2rem">还没有小说</p>
+    <a href="/create" class="btn btn-primary">＋ 新建第一部小说</a>
+  </div>
+{% else %}
+<table class="novel-list">
+  <thead>
+    <tr>
+      <th>标题</th>
+      <th>题材</th>
+      <th>章节</th>
+      <th>自动续写</th>
+      <th>状态</th>
+      <th>更新时间</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for n in novels %}
+    <tr>
+      <td><a href="/novels/{{ n.id }}">{{ n.title }}</a></td>
+      <td>{{ n.genre or "—" }}</td>
+      <td>{{ n.chapter_count }}</td>
+      <td>
+        {% if n.auto_continue %}
+          <span style="color:var(--success)">开</span> · 每 {{ n.interval_minutes }} 分钟
+        {% else %}
+          <span style="color:var(--muted)">关</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if n.is_generating %}
+          <span class="badge gen">生成中</span>
+        {% elif n.last_error %}
+          <span class="badge err" title="{{ n.last_error }}">出错</span>
+        {% else %}
+          <span class="badge ok">空闲</span>
+        {% endif %}
+      </td>
+      <td style="color:var(--muted);font-size:.88rem">
+        {{ n.updated_at.strftime("%m-%d %H:%M") }}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>autoRefreshIfGenerating();</script>
+{% endblock %}

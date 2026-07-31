@@ -1,0 +1,21 @@
+# Environment / secrets
+.env
+
+# Data
+data/
+*.db
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

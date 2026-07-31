@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}{{ novel.title }} · 小说生成器{% endblock %}
+{% block content %}
+
+<!-- Header -->
+<div class="novel-header" data-novel-id="{{ novel.id }}" data-generating="{{ 'true' if novel.is_generating else 'false' }}">
+  <h1>{{ novel.title }}</h1>
+  <div class="meta">
+    <span>{{ novel.genre or "未分类" }}</span>
+    {% if novel.style %}<span class="meta-dot"></span><span>{{ novel.style }}</span>{% endif %}
+    <span class="meta-dot"></span><span>共 {{ novel.chapter_count }} 章</span>
+    <span class="meta-dot"></span>
+    <span>{{ novel.provider or "默认" }} / {{ novel.model or "默认模型" }}</span>
+    {% if novel.is_generating %}
+      <span id="gen-banner" class="badge gen">⏳ 生成中…</span>
+    {% endif %}
+  </div>
+  {% if novel.last_error %}
+    <p class="error" style="margin:.5rem 0 0">⚠️ 上次出错：{{ novel.last_error }}</p>
+  {% endif %}
+</div>
+
+<!-- Controls grid -->
+<div class="controls-grid">
+
+  <!-- 操作 -->
+  <div class="card">
+    <p class="panel-label">操作</p>
+    <div class="ctrl-row">
+      <button id="continue-btn" {% if novel.is_generating %}disabled{% endif %}>立即续写下一章</button>
+      <span id="action-msg" class="save-msg"></span>
+    </div>
+    <div class="ctrl-row">
+      <label class="inline-label">
+        <input type="checkbox" id="auto-toggle" {% if novel.auto_continue %}checked{% endif %}>
+        自动续写
+      </label>
+      <label class="inline-label">每
+        <input type="number" id="interval-input" min="1" value="{{ novel.interval_minutes }}">
+        分钟
+      </label>
+    </div>
+  </div>
+
+  <!-- 生成设置 -->
+  <div class="card">
+    <p class="panel-label">生成设置</p>
+    <div class="ctrl-row">
+      <label class="inline-label">提供方
+        <select id="provider-select">
+          {% for p in providers %}
+          <option value="{{ p.name }}"
+            {% if p.name == novel.provider %}selected{% endif %}
+            {% if not p.available %}disabled{% endif %}>
+            {{ p.label }}{% if not p.available %}(未配置){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="ctrl-row">
+      <label class="inline-label">模型
+        <input type="text" id="model-input" value="{{ novel.model or '' }}" placeholder="留空用默认">
+      </label>
+    </div>
+    <div class="ctrl-row">
+      <button id="save-settings-btn">保存设置</button>
+      <button id="delete-btn" class="btn-danger">删除小说</button>
+    </div>
+    <span id="settings-msg" class="save-msg"></span>
+  </div>
+
+</div>
+
+<!-- 故事设定（可编辑） -->
+<details class="edit-section" open>
+  <summary>故事设定</summary>
+  <div class="edit-section-body">
+    <div class="form-row">
+      <div>
+        <span class="field-label">标题</span>
+        <input class="field" id="edit-title" type="text" value="{{ novel.title }}">
+      </div>
+      <div>
+        <span class="field-label">题材 / 类型</span>
+        <input class="field" id="edit-genre" type="text" value="{{ novel.genre }}">
+      </div>
+      <div>
+        <span class="field-label">写作风格</span>
+        <input class="field" id="edit-style" type="text" value="{{ novel.style }}">
+      </div>
+    </div>
+    <span class="field-label">故事简介</span>
+    <textarea class="field" id="edit-premise" rows="3">{{ novel.premise }}</textarea>
+    <span class="field-label">人物 / 世界观设定</span>
+    <textarea class="field" id="edit-settings" rows="4">{{ novel.settings }}</textarea>
+    <div class="section-actions">
+      <button id="save-story-btn">保存故事设定</button>
+      <span id="story-msg" class="save-msg"></span>
+    </div>
+  </div>
+</details>
+
+<!-- 故事大纲（可编辑） -->
+<details class="edit-section" {% if novel.outline %}open{% endif %}>
+  <summary>故事大纲</summary>
+  <div class="edit-section-body">
+    <span class="field-label" style="margin-top:.9rem">可在此直接修改大纲，影响后续章节生成走向</span>
+    <textarea class="field" id="edit-outline" rows="12" style="font-size:.93rem;line-height:1.8">{{ novel.outline }}</textarea>
+    <div class="section-actions">
+      <button id="save-outline-btn">保存大纲</button>
+      <span id="outline-msg" class="save-msg"></span>
+    </div>
+  </div>
+</details>
+
+<!-- 章节正文 -->
+<section class="chapters">
+  <div class="chapters-header">
+    <h2>正文</h2>
+    <span class="muted" style="font-size:.88rem">共 {{ novel.chapter_count }} 章</span>
+  </div>
+  {% if not novel.chapters %}
+    <p class="empty">
+      {% if novel.is_generating %}首章正在生成，完成后页面自动刷新…
+      {% else %}暂无章节，点击「立即续写下一章」开始。{% endif %}
+    </p>
+  {% endif %}
+  {% for ch in novel.chapters %}
+  <article class="chapter">
+    <h3>{{ ch.title or ("第" ~ ch.index ~ "章") }}</h3>
+    <div class="chapter-body">
+      {% for line in ch.content.split('\n') %}
+        {% if line.strip() %}<p>{{ line }}</p>{% endif %}
+      {% endfor %}
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+{% endblock %}
+{% block scripts %}
+<script>initNovelPage();</script>
+{% endblock %}
