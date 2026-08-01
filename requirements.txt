@@ -9,3 +9,4 @@ google-generativeai>=0.8
 Jinja2>=3.1
 python-dotenv>=1.0
 pydantic-settings>=2.2
+pwdlib[argon2]>=0.2

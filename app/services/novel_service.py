@@ -34,26 +34,25 @@ def _novel_query():
     )
 
 
-def list_novels(db: Session) -> list[Novel]:
-    return list(
-        db.scalars(
-            select(Novel)
-            .options(
-                selectinload(Novel.characters),
-                selectinload(Novel.chapters),
-            )
-            .order_by(Novel.updated_at.desc())
-        )
+def list_novels(db: Session, owner_id: int | None = None) -> list[Novel]:
+    query = (
+        select(Novel)
+        .options(selectinload(Novel.characters), selectinload(Novel.chapters))
+        .order_by(Novel.updated_at.desc())
     )
+    if owner_id is not None:
+        query = query.where(Novel.owner_id == owner_id)
+    return list(db.scalars(query))
 
 
 def get_novel(db: Session, novel_id: int) -> Novel | None:
     return db.scalars(_novel_query().where(Novel.id == novel_id)).first()
 
 
-def create_novel(db: Session, data: NovelCreate) -> Novel:
+def create_novel(db: Session, data: NovelCreate, owner_id: int) -> Novel:
     world = data.world_setting or data.settings or ""
     novel = Novel(
+        owner_id=owner_id,
         title=data.title,
         genre=data.genre,
         premise=data.premise,

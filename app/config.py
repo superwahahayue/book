@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     default_provider: str = "gemini"
     db_path: str = "./data/novels.db"
 
+    # Authentication
+    admin_emails: str = ""
+    auth_session_days: int = 30
+    auth_cookie_secure: bool = False
+
     # Local model (Ollama)
     ollama_host: str = "http://localhost:11434"
     ollama_default_model: str = "gemma4:12b"
@@ -44,6 +49,14 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def admin_email_set(self) -> set[str]:
+        return {
+            email.strip().lower()
+            for email in self.admin_emails.split(",")
+            if email.strip()
+        }
 
     @property
     def online_enabled(self) -> bool:

@@ -3,9 +3,14 @@ import axios from 'axios'
 const http = axios.create({
   baseURL: '/api',
   timeout: 120000,
+  withCredentials: true,
 })
 
 export const api = {
+  register: (data) => http.post('/auth/register', data).then((r) => r.data),
+  login: (data) => http.post('/auth/login', data).then((r) => r.data),
+  logout: () => http.post('/auth/logout'),
+  currentUser: () => http.get('/auth/me').then((r) => r.data),
   listProviders: () => http.get('/providers').then((r) => r.data),
   listNovels: () => http.get('/novels').then((r) => r.data),
   getNovel: (id) => http.get(`/novels/${id}`).then((r) => r.data),

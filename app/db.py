@@ -72,6 +72,12 @@ def migrate_schema() -> None:
 
     novel_cols = _table_columns("novels")
     with engine.begin() as conn:
+        if "owner_id" not in novel_cols:
+            conn.execute(text("ALTER TABLE novels ADD COLUMN owner_id INTEGER"))
+            conn.execute(
+                text("CREATE INDEX IF NOT EXISTS ix_novels_owner_id ON novels (owner_id)")
+            )
+            logger.info("Migrated: novels.owner_id")
         if "world_setting" not in novel_cols:
             conn.execute(text("ALTER TABLE novels ADD COLUMN world_setting TEXT DEFAULT ''"))
             logger.info("Migrated: novels.world_setting")

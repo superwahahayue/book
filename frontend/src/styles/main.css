@@ -67,6 +67,8 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .nav-link { padding: 7px 10px; }
 .nav-link:hover, .nav-link.router-link-active { background: var(--surface-hover); color: var(--ink); }
 .nav-link--new { color: var(--primary); }
+.account-email { display: inline-flex; max-width: 190px; align-items: center; gap: 5px; overflow: hidden; padding: 7px 4px; color: var(--ink-soft); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.account-email small { flex: 0 0 auto; padding: 1px 4px; border-radius: 4px; background: var(--primary-soft); color: var(--primary); font-size: 10px; }
 .icon-btn { width: 34px; height: 34px; padding: 0; font-size: 17px; }
 .icon-btn:hover { background: var(--surface-hover); color: var(--ink); }
 
@@ -101,6 +103,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .text-button--danger:hover { color: var(--danger); }
 
 .field { margin-bottom: 16px; }
+.field-help { display: block; margin-top: 5px; color: var(--ink-faint); font-size: 12px; }
 .field-label { display: block; margin-bottom: 7px; color: var(--ink); font-size: 13px; font-weight: 650; }
 .req { margin-left: 3px; color: var(--danger); }
 .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -121,6 +124,14 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .sk-line { width: 70%; height: 15px; margin-bottom: 8px; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 .empty-state, .reading-empty { display: grid; min-height: 280px; place-content: center; justify-items: center; padding: 36px; color: var(--ink-soft); text-align: center; }
+.auth-page { display: grid; min-height: calc(100vh - var(--topbar-h) - 96px); place-items: center; padding: 24px 0; }
+.auth-card { width: min(100%, 420px); padding: 30px; }
+.auth-card h1 { margin: 0 0 9px; font-size: 28px; letter-spacing: -.04em; }
+.auth-card .page-lead { margin-bottom: 24px; }
+.auth-card .alert { width: 100%; margin-bottom: 16px; }
+.auth-kicker { margin: 0 0 5px; color: var(--primary); font-family: var(--font-reading); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.auth-switch { margin: 18px 0 0; color: var(--ink-soft); font-size: 13px; text-align: center; }
+.auth-switch a { color: var(--primary); font-weight: 700; }
 .empty-state .emoji, .reading-empty > span { margin-bottom: 12px; color: var(--primary); font-size: 28px; }
 
 /* Library and creation pages */
