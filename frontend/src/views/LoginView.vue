@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, errMsg } from '@/api/client'
-import { setCurrentUser } from '@/auth'
+import { auth, setCurrentUser } from '@/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -32,6 +32,7 @@ async function submit() {
       <p class="auth-kicker">欢迎回来</p>
       <h1>登录剧情导演</h1>
       <p class="page-lead">登录后继续管理你的故事和分支。</p>
+      <p v-if="auth.loadError" class="alert err">{{ auth.loadError }}</p>
       <p v-if="error" class="alert err">{{ error }}</p>
       <label class="field">
         <span class="field-label">邮箱</span>

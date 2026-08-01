@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api, errMsg } from '@/api/client'
-import { setCurrentUser } from '@/auth'
+import { auth, setCurrentUser } from '@/auth'
 
 const router = useRouter()
 const email = ref('')
@@ -35,6 +35,7 @@ async function submit() {
       <p class="auth-kicker">开始创作</p>
       <h1>创建账号</h1>
       <p class="page-lead">你的故事、人物与章节仅对你可见。</p>
+      <p v-if="auth.loadError" class="alert err">{{ auth.loadError }}</p>
       <p v-if="error" class="alert err">{{ error }}</p>
       <label class="field">
         <span class="field-label">邮箱</span>
