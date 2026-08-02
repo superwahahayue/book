@@ -252,7 +252,7 @@ docker pull python:3.12-slim
    | `DEPLOY_HOST` | 服务器 IP 或域名 |
    | `DEPLOY_PORT` | SSH 端口，例如 `22` |
    | `DEPLOY_USER` | 部署用户，例如 `root` |
-   | `DEPLOY_SSH_PRIVATE_KEY` | 仅供部署使用的 SSH 私钥全文 |
+   | `DEPLOY_SSH_PRIVATE_KEY_B64` | 仅供部署使用的 SSH 私钥 Base64 单行文本；可避免换行符导致的解析错误 |
    | `DEPLOY_KNOWN_HOSTS` | 服务器 SSH 主机指纹；可用 `ssh-keyscan -H 服务器IP` 获取 |
 
    建议为 `production` 启用“Required reviewers”，使每个版本在发布镜像后先等待确认再更新服务器。
@@ -293,7 +293,8 @@ docker pull python:3.12-slim
 | `docker push` 返回 `unauthorized` 或 `denied` | 重新执行 `docker login ghcr.io -u superwahahayue`，核对 PAT 未过期且含 `write:packages`；组织启用 SSO 时，还需在 GitHub 授权该令牌使用 SSO。 |
 | 服务器 `docker compose pull` 找不到镜像或拉取旧版本 | 核对 `deploy/docker-compose.yml` 中 `image:` 标签与已推送标签完全一致，例如 `backend-0.0.3` 和 `frontend-0.0.3`；私有包还需先在服务器执行 `docker login ghcr.io`。 |
 | GitHub Actions 发布镜像时对 `ghcr.io/.../blobs/...` 返回 `403 Forbidden` | 该镜像包曾通过命令行手动推送，尚未关联到仓库。打开 [novel-generator 包设置](https://github.com/users/superwahahayue/packages/container/novel-generator/settings)，在 **Manage Actions access** 点击 **Add repository**，选择 `superwahahayue/book` 并授予 **Write**（或 **Admin**）权限；随后在 Actions 页面重新运行失败的工作流。工作流已声明 `packages: write`，无需将 PAT 写进仓库 Secret。 |
-| GitHub Actions 部署任务提示部署 Secret 为空 | 在仓库 **Settings → Environments → production** 配置 `DEPLOY_HOST`、`DEPLOY_PORT`、`DEPLOY_USER`、`DEPLOY_SSH_PRIVATE_KEY`、`DEPLOY_KNOWN_HOSTS`；私钥必须与服务器 `authorized_keys` 中的公钥配对。 |
+| GitHub Actions 部署任务提示部署 Secret 为空 | 在仓库 **Settings → Environments → production** 配置 `DEPLOY_HOST`、`DEPLOY_PORT`、`DEPLOY_USER`、`DEPLOY_SSH_PRIVATE_KEY_B64`、`DEPLOY_KNOWN_HOSTS`；私钥必须与服务器 `authorized_keys` 中的公钥配对。 |
+| 加载 SSH 私钥提示 `error in libcrypto` | 不要直接保存多行私钥。使用 `DEPLOY_SSH_PRIVATE_KEY_B64`，其值为私钥文件的 Base64 单行文本；工作流会在运行时还原并校验私钥。 |
 | 自动部署 SSH 连接失败或主机身份校验失败 | 确认 `DEPLOY_KNOWN_HOSTS` 是通过 `ssh-keyscan -H 服务器IP` 获取的完整输出；不要为了绕过校验改用 `StrictHostKeyChecking=no`。 |
 | 其他 GitHub Actions 发布镜像失败 | 在仓库 **Actions** 日志中检查错误；确认工作流由 `v*` 版本标签触发，且仓库未禁止 `GITHUB_TOKEN` 写入 Packages。 |
 | Compose 启动后 8000 端口无法访问 | 检查端口是否被占用：Windows 可用 `Get-NetTCPConnection -LocalPort 8000`；停止冲突服务，或修改 Compose 的端口映射后重启。 |
