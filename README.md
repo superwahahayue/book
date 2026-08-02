@@ -187,6 +187,80 @@ docker compose logs -f --tail=100
 
 远程部署、Docker 中访问主机 Ollama、备份恢复与 HTTPS 配置见 [DEPLOY.md](DEPLOY.md)。
 
+## Docker 镜像发布与部署
+
+项目的后端和前端由根目录的多阶段 `Dockerfile` 分别构建。以下命令使用当前发布版本 `0.0.3`；后续发布时请将两个标签同时替换为新版本号。
+
+### 本地构建与检查
+
+```bash
+docker build --target backend -t ghcr.io/superwahahayue/novel-generator:backend-0.0.3 .
+docker build --target frontend -t ghcr.io/superwahahayue/novel-generator:frontend-0.0.3 .
+docker image ls ghcr.io/superwahahayue/novel-generator
+```
+
+### 网络受限时使用本地 7898 代理
+
+下列设置仅在**当前终端进程**有效；关闭终端或新开终端后需要重新设置。它不会修改 Docker Desktop 的全局配置，也不会影响其他应用。
+
+PowerShell：
+
+```powershell
+$env:HTTP_PROXY='http://127.0.0.1:7898'
+$env:HTTPS_PROXY='http://127.0.0.1:7898'
+$env:NO_PROXY='localhost,127.0.0.1'
+docker pull python:3.12-slim
+```
+
+Git Bash：
+
+```bash
+export HTTP_PROXY=http://127.0.0.1:7898
+export HTTPS_PROXY=http://127.0.0.1:7898
+export NO_PROXY=localhost,127.0.0.1
+docker pull python:3.12-slim
+```
+
+若希望长期让 Docker Desktop 使用代理，请在 Docker Desktop 的 **Settings → Resources → Proxies** 中配置；不要仅编辑 Docker Engine 的 `daemon.json`，Docker Desktop 的代理设置应在 Proxies 页面管理。参见 [Docker Desktop 代理说明](https://docs.docker.com/desktop/settings-and-maintenance/settings/#proxies)。
+
+### 登录并推送到 GitHub Container Registry（GHCR）
+
+1. 在 GitHub 创建 **Personal access token (classic)**，至少勾选 `write:packages`。不要使用 GitHub 登录密码，也不要把令牌写入 `.env`、README、Git 提交或聊天记录。参见 [GitHub Container Registry 认证说明](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-to-the-container-registry)。
+2. 登录 GHCR：
+
+   ```bash
+   docker login ghcr.io -u superwahahayue
+   ```
+
+   在 `Password:` 提示处粘贴刚创建的 PAT。看到 `Login Succeeded` 后再继续。
+
+3. 推荐通过 GitHub Actions 自动构建并发布：提交代码后创建并推送版本标签，例如：
+
+   ```bash
+   git tag v0.0.4
+   git push origin v0.0.4
+   ```
+
+   工作流会自动发布 `backend-0.0.4`、`frontend-0.0.4` 以及对应的提交 SHA 标签。可在 GitHub 仓库的 **Actions** 页面查看进度。
+
+4. 如需在本机手动发布，则在已设置代理的同一终端推送两个镜像：
+
+   ```bash
+   docker push ghcr.io/superwahahayue/novel-generator:backend-0.0.3
+   docker push ghcr.io/superwahahayue/novel-generator:frontend-0.0.3
+   ```
+
+5. 在服务器或另一台机器上部署时，先将 `deploy/docker-compose.yml` 的两个 `image:` 标签改为目标版本，再执行：
+
+   ```bash
+   cd deploy
+   docker compose pull
+   docker compose up -d
+   docker compose ps
+   ```
+
+首次推送的镜像包默认是私有的；需要其他机器或用户拉取时，应在 GitHub Packages 中调整包可见性或为其授予读取权限。
+
 ## 常见问题
 
 | 现象 | 处理方式 |
@@ -194,8 +268,21 @@ docker compose logs -f --tail=100
 | `No module named uvicorn` 或 `No module named fastapi` | 激活虚拟环境后执行 `python -m pip install -r requirements.txt`。 |
 | Git Bash 报 `...python.exe: command not found` | 使用 `./.venv/Scripts/python.exe`，或先执行 `source .venv/Scripts/activate`；路径使用 `/`。 |
 | 页面可打开但生成章节失败 | 检查 `.env` 中的 `DEFAULT_PROVIDER` 与对应 API Key、模型名和服务地址；使用 Ollama 时确认服务已启动且模型已拉取。 |
-| 前端请求连接不到 API | 确认后端正在 `http://localhost:8000` 运行，再查看 Vite 终端是否显示代理错误。 |
+| 未登录时页面空白、没有登录/注册界面，或页面提示无法连接认证服务 | 前端依赖后端的 `/api/auth/me` 初始化状态。确认后端正在 `http://localhost:8000` 运行：`python -m uvicorn app.main:app --reload --port 8000`；不要只启动 `npm run dev`。 |
+| 前端请求连接不到 API / Vite 显示代理错误 | 确认后端正在 `http://localhost:8000` 运行；检查 8000 端口未被其他程序占用，并保持 Vite 使用默认代理配置。 |
+| 登录或注册后仍回到登录页 | 确认浏览器允许本地站点 Cookie；开发环境保持 `AUTH_COOKIE_SECURE=false`，部署到 HTTPS 后才设置为 `true`。也请确认浏览器访问地址一致（不要在 `localhost` 与 `127.0.0.1` 间来回切换）。 |
+| 普通用户看不到旧小说 | 这是权限设计：未归属的历史小说只会由第一个登录/注册的管理员自动认领。将管理员邮箱加入 `ADMIN_EMAILS` 后，用该账号登录一次。 |
 | Windows 执行 `Activate.ps1` 被阻止 | 可在当前 PowerShell 会话执行 `Set-ExecutionPolicy -Scope Process Bypass` 后重试，或直接使用 `.\.venv\Scripts\python.exe -m ...`。 |
+| `docker version` 无法连接 daemon，或提示 Docker Engine 未运行 | 启动 Docker Desktop，等待状态变为 Running 后执行 `docker version` 再重试。 |
+| 构建/拉取时报 `auth.docker.io:443` 超时、TLS 握手失败或无法连接 | 先确认本地代理服务正在监听 `127.0.0.1:7898`，然后按“网络受限时使用本地 7898 代理”一节在**同一终端**设置 `HTTP_PROXY` 和 `HTTPS_PROXY`，再用 `docker pull python:3.12-slim` 验证。 |
+| `docker login ghcr.io` 返回 `denied` | 用户名应为 GitHub 用户名；密码必须是有 `write:packages` 权限的 **classic PAT**，不是 GitHub 账号密码。可先执行 `docker logout ghcr.io` 再重新登录。 |
+| `docker push` 返回 `unauthorized` 或 `denied` | 重新执行 `docker login ghcr.io -u superwahahayue`，核对 PAT 未过期且含 `write:packages`；组织启用 SSO 时，还需在 GitHub 授权该令牌使用 SSO。 |
+| 服务器 `docker compose pull` 找不到镜像或拉取旧版本 | 核对 `deploy/docker-compose.yml` 中 `image:` 标签与已推送标签完全一致，例如 `backend-0.0.3` 和 `frontend-0.0.3`；私有包还需先在服务器执行 `docker login ghcr.io`。 |
+| GitHub Actions 发布镜像失败 | 在仓库 **Actions** 日志中检查错误；确认工作流由 `v*` 版本标签触发，且仓库未禁止 `GITHUB_TOKEN` 写入 Packages。 |
+| Compose 启动后 8000 端口无法访问 | 检查端口是否被占用：Windows 可用 `Get-NetTCPConnection -LocalPort 8000`；停止冲突服务，或修改 Compose 的端口映射后重启。 |
+| 后端显示 `unhealthy`，前端没有启动 | 健康检查不得访问需登录的 `/api/novels`（未登录会返回 `401`）。使用仓库当前部署配置，或将检查地址改为 `http://127.0.0.1:8000/`，然后执行 `docker compose up -d --force-recreate`。 |
+| 容器反复重启或显示 `unhealthy` | 在 `deploy/` 目录运行 `docker compose logs -f --tail=100`；确认 `.env` 已创建、模型服务地址可从容器访问、以及 `data/` 目录可写。 |
+| 更新镜像后数据丢失 | SQLite 数据应保存在挂载目录 `data/`，不要删除该目录。升级前备份 `data/novels.db`，并使用 `docker compose up -d` 更新容器。 |
 
 ## 使用流程
 

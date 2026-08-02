@@ -1,8 +1,7 @@
-# Server deployment for the published GHCR images. No project source or Docker
-# build context is needed on the server.
+# 使用已发布 GHCR 镜像的服务器部署配置；服务器无需项目源代码或 Docker 构建上下文。
 services:
   backend:
-    image: ghcr.io/superwahahayue/novel-generator:backend-0.0.1
+    image: ghcr.io/superwahahayue/novel-generator:backend-0.0.3
     env_file:
       - .env
     volumes:
@@ -18,14 +17,14 @@ services:
         - CMD
         - python
         - -c
-        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/novels', timeout=3)"
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=3)"
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 15s
 
   frontend:
-    image: ghcr.io/superwahahayue/novel-generator:frontend-0.0.1
+    image: ghcr.io/superwahahayue/novel-generator:frontend-0.0.3
     ports:
       - "127.0.0.1:8000:80"
     depends_on:
