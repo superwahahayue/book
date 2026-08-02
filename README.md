@@ -243,6 +243,20 @@ docker pull python:3.12-slim
 
    工作流会自动发布 `backend-0.0.4`、`frontend-0.0.4` 以及对应的提交 SHA 标签。可在 GitHub 仓库的 **Actions** 页面查看进度。
 
+   若已配置生产部署，镜像发布成功后还会自动将最新的 `deploy/docker-compose.yml` 上传到服务器，并以 `0.0.4` 作为 `IMAGE_TAG` 拉取、启动并等待容器健康。服务器的 `.env` 和 `data/` 不会被覆盖。
+
+   首次启用自动部署前，在仓库 **Settings → Environments → production** 添加以下 Environment Secrets：
+
+   | Secret | 含义 |
+   |---|---|
+   | `DEPLOY_HOST` | 服务器 IP 或域名 |
+   | `DEPLOY_PORT` | SSH 端口，例如 `22` |
+   | `DEPLOY_USER` | 部署用户，例如 `root` |
+   | `DEPLOY_SSH_PRIVATE_KEY` | 仅供部署使用的 SSH 私钥全文 |
+   | `DEPLOY_KNOWN_HOSTS` | 服务器 SSH 主机指纹；可用 `ssh-keyscan -H 服务器IP` 获取 |
+
+   建议为 `production` 启用“Required reviewers”，使每个版本在发布镜像后先等待确认再更新服务器。
+
 4. 如需在本机手动发布，则在已设置代理的同一终端推送两个镜像：
 
    ```bash
@@ -278,7 +292,10 @@ docker pull python:3.12-slim
 | `docker login ghcr.io` 返回 `denied` | 用户名应为 GitHub 用户名；密码必须是有 `write:packages` 权限的 **classic PAT**，不是 GitHub 账号密码。可先执行 `docker logout ghcr.io` 再重新登录。 |
 | `docker push` 返回 `unauthorized` 或 `denied` | 重新执行 `docker login ghcr.io -u superwahahayue`，核对 PAT 未过期且含 `write:packages`；组织启用 SSO 时，还需在 GitHub 授权该令牌使用 SSO。 |
 | 服务器 `docker compose pull` 找不到镜像或拉取旧版本 | 核对 `deploy/docker-compose.yml` 中 `image:` 标签与已推送标签完全一致，例如 `backend-0.0.3` 和 `frontend-0.0.3`；私有包还需先在服务器执行 `docker login ghcr.io`。 |
-| GitHub Actions 发布镜像失败 | 在仓库 **Actions** 日志中检查错误；确认工作流由 `v*` 版本标签触发，且仓库未禁止 `GITHUB_TOKEN` 写入 Packages。 |
+| GitHub Actions 发布镜像时对 `ghcr.io/.../blobs/...` 返回 `403 Forbidden` | 该镜像包曾通过命令行手动推送，尚未关联到仓库。打开 [novel-generator 包设置](https://github.com/users/superwahahayue/packages/container/novel-generator/settings)，在 **Manage Actions access** 点击 **Add repository**，选择 `superwahahayue/book` 并授予 **Write**（或 **Admin**）权限；随后在 Actions 页面重新运行失败的工作流。工作流已声明 `packages: write`，无需将 PAT 写进仓库 Secret。 |
+| GitHub Actions 部署任务提示部署 Secret 为空 | 在仓库 **Settings → Environments → production** 配置 `DEPLOY_HOST`、`DEPLOY_PORT`、`DEPLOY_USER`、`DEPLOY_SSH_PRIVATE_KEY`、`DEPLOY_KNOWN_HOSTS`；私钥必须与服务器 `authorized_keys` 中的公钥配对。 |
+| 自动部署 SSH 连接失败或主机身份校验失败 | 确认 `DEPLOY_KNOWN_HOSTS` 是通过 `ssh-keyscan -H 服务器IP` 获取的完整输出；不要为了绕过校验改用 `StrictHostKeyChecking=no`。 |
+| 其他 GitHub Actions 发布镜像失败 | 在仓库 **Actions** 日志中检查错误；确认工作流由 `v*` 版本标签触发，且仓库未禁止 `GITHUB_TOKEN` 写入 Packages。 |
 | Compose 启动后 8000 端口无法访问 | 检查端口是否被占用：Windows 可用 `Get-NetTCPConnection -LocalPort 8000`；停止冲突服务，或修改 Compose 的端口映射后重启。 |
 | 后端显示 `unhealthy`，前端没有启动 | 健康检查不得访问需登录的 `/api/novels`（未登录会返回 `401`）。使用仓库当前部署配置，或将检查地址改为 `http://127.0.0.1:8000/`，然后执行 `docker compose up -d --force-recreate`。 |
 | 容器反复重启或显示 `unhealthy` | 在 `deploy/` 目录运行 `docker compose logs -f --tail=100`；确认 `.env` 已创建、模型服务地址可从容器访问、以及 `data/` 目录可写。 |

@@ -1,6 +1,6 @@
 # 服务器部署包
 
-此目录是仅用于生产环境的部署包。它从 GHCR 拉取已发布的 `0.0.3` 前端和后端镜像；服务器不需要项目源代码、`Dockerfile`、Node.js 或 Python 开发环境。
+此目录是仅用于生产环境的部署包。它从 GHCR 拉取已发布的前端和后端镜像；服务器不需要项目源代码、`Dockerfile`、Node.js 或 Python 开发环境。镜像版本由 `IMAGE_TAG` 环境变量决定。
 
 ## 准备上传内容
 
@@ -25,8 +25,8 @@ sudo chown 10001:10001 data
 # GHCR 镜像为私有包时需要登录；密码使用有包读取权限的 GitHub classic PAT。
 docker login ghcr.io -u superwahahayue
 
-docker compose pull
-docker compose up -d
+IMAGE_TAG=0.0.3 docker compose pull
+IMAGE_TAG=0.0.3 docker compose up -d
 docker compose ps
 ```
 
@@ -38,9 +38,9 @@ docker compose logs -f --tail=100
 
 ## 升级版本
 
-在 GitHub 推送 `v0.0.4` 之类的版本标签后，Actions 会发布 `backend-0.0.4` 和 `frontend-0.0.4`。在服务器将两个镜像标签同时改为新版本，再执行：
+在 GitHub 推送 `v0.0.4` 之类的版本标签后，Actions 会发布 `backend-0.0.4` 和 `frontend-0.0.4`。启用自动部署后，服务器会自动更新；未启用时执行：
 
 ```sh
-docker compose pull
-docker compose up -d
+IMAGE_TAG=0.0.4 docker compose pull
+IMAGE_TAG=0.0.4 docker compose up -d --wait
 ```
