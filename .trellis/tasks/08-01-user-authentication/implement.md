@@ -16,6 +16,17 @@
 7. Add or update tests for authentication and authorization boundaries; run
    backend checks and `npm run build`.
 
+8. Add the idempotent `chapters.is_primary` migration, expose it in chapter
+   responses, and add an authorized operation to select the primary child.
+9. Update generation so the first child is the default continuation and later
+   siblings are branches; cover migration, ordering, and reassignment with
+   backend tests.
+10. Rework the story directory and reader around default continuation,
+    branch labels, active-path context, and a direct next-chapter action.
+11. Harden the mobile workspace CSS and validate it at a narrow viewport with
+    long story and chapter titles, then run the full backend checks and
+    frontend build.
+
 ## Review gates
 
 - Verify no plaintext password or raw session token is stored in SQLite.

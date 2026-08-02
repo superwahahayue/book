@@ -92,6 +92,52 @@ class AuthenticationIntegrationTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/auth/logout").status_code, 204)
         self.assertEqual(self.client.get("/api/auth/me").status_code, 401)
 
+    def test_primary_chapter_continuation_can_be_migrated_and_switched(self) -> None:
+        from app.db import init_db, session_scope
+        from app.models import Chapter, Novel
+
+        registration = self.client.post(
+            "/api/auth/register",
+            json={"email": "reader@example.com", "password": "password123"},
+        )
+        with session_scope() as db:
+            novel = Novel(title="Tree story", owner_id=registration.json()["id"])
+            db.add(novel)
+            db.flush()
+            root = Chapter(novel_id=novel.id, index=1, title="开篇")
+            db.add(root)
+            db.flush()
+            continuation = Chapter(
+                novel_id=novel.id, parent_id=root.id, index=2, title="默认续写"
+            )
+            branch = Chapter(
+                novel_id=novel.id, parent_id=root.id, index=3, title="另一条路"
+            )
+            db.add_all([continuation, branch])
+            db.flush()
+            novel_id, root_id, branch_id = novel.id, root.id, branch.id
+
+        init_db()
+        tree = self.client.get(f"/api/novels/{novel_id}/chapters/tree").json()
+        self.assertEqual(tree[0]["id"], root_id)
+        self.assertEqual(
+            [(child["title"], child["is_primary"]) for child in tree[0]["children"]],
+            [("默认续写", True), ("另一条路", False)],
+        )
+
+        response = self.client.post(f"/api/chapters/{branch_id}/set-primary")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["is_primary"])
+
+        tree = self.client.get(f"/api/novels/{novel_id}/chapters/tree").json()
+        self.assertEqual(
+            [(child["title"], child["is_primary"]) for child in tree[0]["children"]],
+            [("另一条路", True), ("默认续写", False)],
+        )
+        self.assertEqual(
+            self.client.post(f"/api/chapters/{root_id}/set-primary").status_code, 400
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

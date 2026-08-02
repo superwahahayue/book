@@ -225,8 +225,10 @@ def build_chapter_tree(chapters: list[Chapter]) -> list[dict]:
         nodes[c.id] = {
             "id": c.id,
             "parent_id": c.parent_id,
+            "index": c.index,
             "title": c.title,
             "plot_directive": c.plot_directive or "",
+            "is_primary": bool(c.is_primary),
             "is_ending": bool(c.is_ending),
             "summary": c.summary or "",
             "created_at": c.created_at,
@@ -239,7 +241,25 @@ def build_chapter_tree(chapters: list[Chapter]) -> list[dict]:
             nodes[c.parent_id]["children"].append(node)
         else:
             roots.append(node)
+    sort_key = lambda item: (not item["is_primary"], item["index"], item["id"])
+    for node in nodes.values():
+        node["children"].sort(key=sort_key)
+    roots.sort(key=lambda item: item["id"])
     return roots
+
+
+def set_primary_chapter(db: Session, chapter: Chapter) -> Chapter:
+    """Select one child as its parent's default continuation."""
+    if chapter.parent_id is None:
+        raise ValueError("开篇章节不能设为下一章。")
+
+    db.query(Chapter).filter(Chapter.parent_id == chapter.parent_id).update(
+        {Chapter.is_primary: False}, synchronize_session=False
+    )
+    chapter.is_primary = True
+    db.commit()
+    db.refresh(chapter)
+    return chapter
 
 
 def start_generate(novel_id: int, parent_id: int | None, plot_directive: str) -> None:

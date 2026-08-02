@@ -350,6 +350,19 @@ def update_chapter(
     return ChapterRead.model_validate(chapter)
 
 
+@router.post("/chapters/{chapter_id}/set-primary", response_model=ChapterRead)
+def set_primary_chapter(
+    chapter_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    chapter = _get_chapter_or_404(db, user, chapter_id)
+    try:
+        return ChapterRead.model_validate(novel_service.set_primary_chapter(db, chapter))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.delete("/chapters/{chapter_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_chapter(
     chapter_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)

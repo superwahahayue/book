@@ -178,6 +178,9 @@ class Chapter(Base):
     content: Mapped[str] = mapped_column(Text, default="")
     summary: Mapped[str] = mapped_column(Text, default="")
     plot_directive: Mapped[str] = mapped_column(Text, default="")
+    # The default continuation among a chapter's children. Alternative siblings
+    # remain available as branches.
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
     is_ending: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 

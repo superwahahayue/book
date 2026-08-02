@@ -101,6 +101,14 @@ def migrate_schema() -> None:
                     text("ALTER TABLE chapters ADD COLUMN plot_directive TEXT DEFAULT ''")
                 )
                 logger.info("Migrated: chapters.plot_directive")
+            if "is_primary" not in ch_cols:
+                conn.execute(
+                    text(
+                        "ALTER TABLE chapters ADD COLUMN is_primary "
+                        "INTEGER DEFAULT 0 NOT NULL"
+                    )
+                )
+                logger.info("Migrated: chapters.is_primary")
             if "is_ending" not in ch_cols:
                 conn.execute(
                     text(
@@ -110,6 +118,7 @@ def migrate_schema() -> None:
                 logger.info("Migrated: chapters.is_ending")
 
         _backfill_chapter_tree()
+        _backfill_primary_chapters()
 
     # Ensure new tables exist (create_all already did; no-op).
     Base.metadata.create_all(bind=engine)
@@ -169,6 +178,38 @@ def _backfill_chapter_tree() -> None:
                 logger.info(
                     "Backfilled chapter tree for novel %s (%s nodes)", novel_id, len(rows)
                 )
+
+
+def _backfill_primary_chapters() -> None:
+    """Give each existing branch point one deterministic default continuation."""
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                "SELECT id, parent_id, is_primary, \"index\" FROM chapters "
+                "WHERE parent_id IS NOT NULL "
+                "ORDER BY parent_id ASC, \"index\" ASC, id ASC"
+            )
+        ).fetchall()
+
+        current_parent: int | None = None
+        group: list[tuple[int, int, int, int]] = []
+        for row in rows:
+            parent_id = row[1]
+            if current_parent is not None and parent_id != current_parent:
+                if not any(item[2] for item in group):
+                    conn.execute(
+                        text("UPDATE chapters SET is_primary = 1 WHERE id = :id"),
+                        {"id": group[0][0]},
+                    )
+                group = []
+            current_parent = parent_id
+            group.append(row)
+
+        if group and not any(item[2] for item in group):
+            conn.execute(
+                text("UPDATE chapters SET is_primary = 1 WHERE id = :id"),
+                {"id": group[0][0]},
+            )
 
 
 def _reset_stale_generating() -> None:

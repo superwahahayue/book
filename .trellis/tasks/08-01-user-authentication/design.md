@@ -103,3 +103,44 @@ Add these settings and document them in `.env.example` and README:
   claim.
 - Run Python syntax/import checks and API tests with a temporary SQLite DB.
 - Run `npm run build` to validate Vue routes and components.
+
+## Chapter continuation and mobile workspace
+
+### Continuation model and migration
+
+Add `chapters.is_primary` as an explicit choice of the default child under a
+parent. It is not a global linear order: every chapter can have at most one
+primary child, while each other child remains an alternative branch. During
+the idempotent SQLite upgrade, group existing chapters by `parent_id` and mark
+the lowest `(index, id)` child as primary. This keeps all historical data while
+giving older stories a predictable default route.
+
+When a child is generated under a parent that has no primary child, it becomes
+the primary continuation; later children are branches. A dedicated endpoint
+sets a selected child as primary and clears that flag from its siblings in the
+same transaction. Root chapters are excluded from this operation.
+
+### API and interface contract
+
+`ChapterRead` and `ChapterTreeNode` expose `is_primary`. The chapter tree
+continues to use nested children but orders the primary child first. The
+reading page derives:
+
+- the active ancestor path;
+- the active chapter's primary next chapter;
+- whether the current chapter is a primary path or an alternative branch.
+
+The directory visually separates the primary continuation from branches. The
+reader offers a direct "下一章" action when a primary child exists, and the
+composer calls its action "续写主线" only when there is no continuation; once a
+continuation exists, it explicitly offers a new branch. Users can mark a
+sibling branch as the new primary continuation without moving or deleting any
+content.
+
+### Responsive layout
+
+The story workspace keeps a three-column desktop layout. At narrow widths,
+the directory and composer remain bottom sheets, while the toolbar, reader,
+tree rows, titles, buttons, tabs, and bottom navigation must use `min-width: 0`,
+wrapping, and safe-area padding so a long title or control cannot widen the
+viewport. The reader reserves space for the fixed mobile action bar.

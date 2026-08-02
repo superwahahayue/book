@@ -20,6 +20,7 @@ This directory contains guidelines for backend development. Fill in each file wi
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
 | [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | To fill |
 | [Authentication Guidelines](./authentication-guidelines.md) | User sessions and resource authorization | Active |
+| [Chapter Tree Guidelines](./chapter-tree-guidelines.md) | Default continuations and branches | Active |
 
 ---
 

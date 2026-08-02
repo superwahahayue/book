@@ -33,6 +33,7 @@ export const api = {
   chapterTree: (novelId) => http.get(`/novels/${novelId}/chapters/tree`).then((r) => r.data),
   getChapter: (id) => http.get(`/chapters/${id}`).then((r) => r.data),
   updateChapter: (id, data) => http.patch(`/chapters/${id}`, data).then((r) => r.data),
+  setPrimaryChapter: (id) => http.post(`/chapters/${id}/set-primary`).then((r) => r.data),
   deleteChapter: (id) => http.delete(`/chapters/${id}`),
   generateChapter: (novelId, data) =>
     http.post(`/novels/${novelId}/chapters/generate`, data).then((r) => r.data),

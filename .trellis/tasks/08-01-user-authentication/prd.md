@@ -25,6 +25,10 @@ accounts can access content belonging to every user.
 - Successful login persists for 30 days unless the user explicitly logs out.
 - The application provides usable login and registration views and redirects
   unauthenticated visitors away from protected views.
+- The story workspace must remain usable on narrow mobile viewports without
+  horizontal overflow.
+- Each chapter's default continuation must be distinguishable from its
+  alternative branches, and users must be able to change that choice.
 
 ## Acceptance Criteria
 
@@ -42,6 +46,12 @@ accounts can access content belonging to every user.
       current session.
 - [ ] The frontend presents authentication screens and prevents access to the
       library, creation, and novel routes until authenticated.
+- [ ] Mobile story views have no horizontal overflow and preserve access to
+      chapter navigation, writing, and reading controls.
+- [ ] The chapter directory identifies a default next chapter, shows the
+      active path, and labels alternative siblings as branches.
+- [ ] Existing chapter trees retain every node and receive a deterministic
+      default continuation; users can choose a different continuation later.
 
 ## Notes
 

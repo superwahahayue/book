@@ -105,6 +105,7 @@ class ChapterRead(BaseModel):
     content: str
     summary: str
     plot_directive: str
+    is_primary: bool
     is_ending: bool
     created_at: datetime
 
@@ -114,6 +115,7 @@ class ChapterTreeNode(BaseModel):
     parent_id: int | None
     title: str | None
     plot_directive: str
+    is_primary: bool
     is_ending: bool
     summary: str
     created_at: datetime
