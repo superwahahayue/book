@@ -48,7 +48,7 @@ onUnmounted(() => clearInterval(timer))
   <div class="container">
     <div class="page-head row between row-wrap gap-md">
       <div>
-        <h1 class="hero-title"><span class="spark">✨</span> 我的剧本库</h1>
+        <h1 class="hero-title"><span class="spark">✨</span> 我的创作库</h1>
         <p class="page-lead">像 galgame 一样导演每一条分支剧情</p>
       </div>
       <RouterLink to="/create" class="btn btn-primary">＋ 开启新故事</RouterLink>

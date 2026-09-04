@@ -45,10 +45,10 @@ frontend/
 ```bash
 cd frontend
 npm install      # 首次
-npm run dev      # http://localhost:5173
+npm run dev      # http://localhost:5288
 ```
 
-浏览器打开 http://localhost:5173 。前端调用 `/api/*` 会自动代理到 `:8000`。
+浏览器打开 http://localhost:5288 。前端调用 `/api/*` 会自动代理到 `:8000`。
 
 ## 构建部署
 

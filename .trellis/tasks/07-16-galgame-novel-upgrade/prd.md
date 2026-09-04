@@ -10,7 +10,7 @@
 - 人物设定为自由文本 `Novel.settings`；章节线性 `Chapter.index`；无角色/关系/分支。
 - 生成：`generation.py` + `prompts.py` 黑箱续写；创建后自动大纲+第1章；APScheduler 定时续写。
 - `init_db` 仅 `create_all`，无正式迁移框架；升级需自写 SQLite 兼容迁移或重建策略。
-- Vue 开发端口 5173 代理 `/api`；生产 `frontend/dist` 尚未由 `main.py` 统一托管（当前仍挂 Jinja）。
+- Vue 开发端口 5288 代理 `/api`；生产 `frontend/dist` 尚未由 `main.py` 统一托管（当前仍挂 Jinja）。
 
 ## Decisions
 

@@ -68,7 +68,7 @@ cd frontend
 npm run dev
 ```
 
-浏览器打开 Vite 提示的地址（默认 http://localhost:5173 ）。
+浏览器打开 Vite 提示的地址（默认 http://localhost:5288 ）。
 
 ### 生产（单端口）
 

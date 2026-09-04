@@ -13,7 +13,7 @@ export default defineConfig({
   },
   server: {
     host: true, // 暴露到局域网，自动打印可访问的 Network 地址
-    port: 5173,
+    port: 5288,
     proxy: {
       '/api': {
         target: 'http://localhost:8000',

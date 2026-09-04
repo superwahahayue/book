@@ -147,7 +147,7 @@ frontend/src/
 3. catch-all `GET /{path}` → `index.html`（排除 `/api`）
 4. 移除 Jinja `web_router` 或改为重定向
 
-开发：Vite `:5173` proxy `/api` 不变。
+开发：Vite `:5288` proxy `/api` 不变。
 
 ## Scheduler Removal
 
