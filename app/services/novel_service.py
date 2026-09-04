@@ -34,26 +34,25 @@ def _novel_query():
     )
 
 
-def list_novels(db: Session) -> list[Novel]:
-    return list(
-        db.scalars(
-            select(Novel)
-            .options(
-                selectinload(Novel.characters),
-                selectinload(Novel.chapters),
-            )
-            .order_by(Novel.updated_at.desc())
-        )
+def list_novels(db: Session, owner_id: int | None = None) -> list[Novel]:
+    query = (
+        select(Novel)
+        .options(selectinload(Novel.characters), selectinload(Novel.chapters))
+        .order_by(Novel.updated_at.desc())
     )
+    if owner_id is not None:
+        query = query.where(Novel.owner_id == owner_id)
+    return list(db.scalars(query))
 
 
 def get_novel(db: Session, novel_id: int) -> Novel | None:
     return db.scalars(_novel_query().where(Novel.id == novel_id)).first()
 
 
-def create_novel(db: Session, data: NovelCreate) -> Novel:
+def create_novel(db: Session, data: NovelCreate, owner_id: int) -> Novel:
     world = data.world_setting or data.settings or ""
     novel = Novel(
+        owner_id=owner_id,
         title=data.title,
         genre=data.genre,
         premise=data.premise,
@@ -226,8 +225,10 @@ def build_chapter_tree(chapters: list[Chapter]) -> list[dict]:
         nodes[c.id] = {
             "id": c.id,
             "parent_id": c.parent_id,
+            "index": c.index,
             "title": c.title,
             "plot_directive": c.plot_directive or "",
+            "is_primary": bool(c.is_primary),
             "is_ending": bool(c.is_ending),
             "summary": c.summary or "",
             "created_at": c.created_at,
@@ -240,7 +241,25 @@ def build_chapter_tree(chapters: list[Chapter]) -> list[dict]:
             nodes[c.parent_id]["children"].append(node)
         else:
             roots.append(node)
+    sort_key = lambda item: (not item["is_primary"], item["index"], item["id"])
+    for node in nodes.values():
+        node["children"].sort(key=sort_key)
+    roots.sort(key=lambda item: item["id"])
     return roots
+
+
+def set_primary_chapter(db: Session, chapter: Chapter) -> Chapter:
+    """Select one child as its parent's default continuation."""
+    if chapter.parent_id is None:
+        raise ValueError("开篇章节不能设为下一章。")
+
+    db.query(Chapter).filter(Chapter.parent_id == chapter.parent_id).update(
+        {Chapter.is_primary: False}, synchronize_session=False
+    )
+    chapter.is_primary = True
+    db.commit()
+    db.refresh(chapter)
+    return chapter
 
 
 def start_generate(novel_id: int, parent_id: int | None, plot_directive: str) -> None:

@@ -30,10 +30,54 @@ const chaptersById = computed(() => Object.fromEntries((novel.value?.chapters ||
 const activeChapter = computed(() => activeId.value == null ? null : chaptersById.value[activeId.value] || null)
 const hasRoot = computed(() => (novel.value?.chapters || []).some((chapter) => chapter.parent_id == null))
 const paragraphs = computed(() => (activeChapter.value?.content || '').split('\n').map((line) => line.trim()).filter(Boolean))
+const activePath = computed(() => {
+  const path = []
+  let current = activeChapter.value
+  while (current) {
+    path.push(current)
+    current = current.parent_id == null ? null : chaptersById.value[current.parent_id]
+  }
+  return path.reverse()
+})
+const activePathIds = computed(() => activePath.value.map((chapter) => chapter.id))
+const primaryNextChapter = computed(() => {
+  if (!activeChapter.value) return null
+  return (novel.value?.chapters || [])
+    .filter((chapter) => chapter.parent_id === activeChapter.value.id)
+    .sort((left, right) => Number(right.is_primary) - Number(left.is_primary) || left.index - right.index || left.id - right.id)
+    .find((chapter) => chapter.is_primary) || null
+})
+const activeIsOnPrimaryPath = computed(() => activePath.value.every((chapter) => chapter.parent_id == null || chapter.is_primary))
+const chapterLocation = computed(() => {
+  if (!activeChapter.value) return ''
+  if (activeChapter.value.parent_id == null) return '开篇 · 第 1 章'
+  if (activeIsOnPrimaryPath.value) return `主线 · 第 ${activePath.value.length} 章`
+  const branchStart = activePath.value.findIndex((chapter) => chapter.parent_id != null && !chapter.is_primary)
+  return `分支剧情 · 从第 ${branchStart} 章岔开`
+})
+const composerMode = computed(() => {
+  if (!hasRoot.value) return 'opening'
+  if (!activeChapter.value) return 'select'
+  return primaryNextChapter.value ? 'branch' : 'continue'
+})
 
 function pickDefaultNode(data) {
   const chapters = data.chapters || []
-  return chapters.length ? chapters[chapters.length - 1].id : null
+  const byParent = new Map()
+  for (const chapter of chapters) {
+    const siblings = byParent.get(chapter.parent_id) || []
+    siblings.push(chapter)
+    byParent.set(chapter.parent_id, siblings)
+  }
+  let current = (byParent.get(null) || []).sort((left, right) => left.index - right.index || left.id - right.id)[0]
+  while (current) {
+    const next = (byParent.get(current.id) || [])
+      .sort((left, right) => Number(right.is_primary) - Number(left.is_primary) || left.index - right.index || left.id - right.id)
+      .find((chapter) => chapter.is_primary)
+    if (!next) break
+    current = next
+  }
+  return current?.id || (chapters.length ? chapters[chapters.length - 1].id : null)
 }
 
 async function load(initial = false) {
@@ -144,6 +188,17 @@ async function deleteNode() {
   }
 }
 
+async function setPrimary() {
+  if (!activeChapter.value || activeChapter.value.parent_id == null || activeChapter.value.is_primary) return
+  try {
+    await api.setPrimaryChapter(activeChapter.value.id)
+    actionMsg.value = '已将此章节设为默认下一章。'
+    await load()
+  } catch (error) {
+    actionErr.value = errMsg(error, '设置主线失败')
+  }
+}
+
 async function saveSettings() {
   try {
     await api.updateNovel(props.id, { ...settings, provider: settings.provider || null, model: settings.model.trim() || null })
@@ -207,21 +262,24 @@ onUnmounted(() => clearInterval(timer))
           <div><span class="pane-kicker">STORY MAP</span><h2>章节目录</h2></div>
           <button type="button" class="pane-close mobile-only" aria-label="关闭目录" @click="isTreeOpen = false">×</button>
         </div>
-        <StoryTree :nodes="tree" :active-id="activeId" @select="selectNode" />
+        <StoryTree :nodes="tree" :active-id="activeId" :active-path-ids="activePathIds" @select="selectNode" />
       </aside>
 
       <section class="reading-surface" aria-live="polite">
         <template v-if="activeChapter">
           <header class="reading-surface__header">
             <div>
-              <p class="reading-eyebrow">{{ activeChapter.is_ending ? '故事结局' : '剧情章节' }}</p>
+              <p class="reading-eyebrow">{{ activeChapter.is_ending ? '故事结局' : chapterLocation }}</p>
               <h2>{{ activeChapter.title || `章节 #${activeChapter.id}` }}</h2>
             </div>
             <div class="chapter-actions">
+              <button v-if="primaryNextChapter" type="button" class="text-button" @click="selectNode(primaryNextChapter.id)">阅读下一章 →</button>
+              <button v-if="activeChapter.parent_id != null && !activeChapter.is_primary" type="button" class="text-button" @click="setPrimary">设为主线下一章</button>
               <button type="button" class="text-button" @click="toggleEnding">{{ activeChapter.is_ending ? '取消结局' : '标为结局' }}</button>
               <button type="button" class="text-button text-button--danger" @click="deleteNode">删除</button>
             </div>
           </header>
+          <nav v-if="activePath.length > 1" class="chapter-breadcrumb" aria-label="当前章节路径"><button v-for="chapter in activePath" :key="chapter.id" type="button" :class="{ active: chapter.id === activeChapter.id }" @click="selectNode(chapter.id)">{{ chapter.title || `第 ${chapter.index} 章` }}</button></nav>
           <div v-if="activeChapter.plot_directive" class="chapter-prompt"><span>本章指令</span>{{ activeChapter.plot_directive }}</div>
           <article class="novel-reader">
             <p v-for="(paragraph, index) in paragraphs" :key="index">{{ paragraph }}</p>
@@ -249,10 +307,10 @@ onUnmounted(() => clearInterval(timer))
         </div>
 
         <section v-show="sideTab === 'director'" class="composer-section">
-          <p class="composer-hint">{{ hasRoot ? '基于当前章节，写下你想让故事发生的下一幕。' : '写下开篇场景，生成故事的第一章。' }}</p>
+          <p class="composer-hint">{{ composerMode === 'opening' ? '写下开篇场景，生成故事的第一章。' : composerMode === 'branch' ? '当前章节已有默认下一章；本次生成会创建一条新的分支。' : composerMode === 'continue' ? '当前章节尚无下一章；本次生成会续写主线。' : '请先从章节目录中选择一个章节。' }}</p>
           <div class="field"><label class="field-label" for="plot-directive">下一步剧情</label><textarea id="plot-directive" v-model="directive" class="textarea composer-textarea" rows="7" placeholder="例如：雨夜的天台上，她终于鼓起勇气告白，却被意外来访的人打断。" /></div>
           <div class="composer-actions">
-            <button type="button" class="btn btn-primary btn-block" :disabled="novel.is_generating" @click="generate">{{ hasRoot ? '生成下一章' : '生成开篇' }}</button>
+            <button type="button" class="btn btn-primary btn-block" :disabled="novel.is_generating || composerMode === 'select'" @click="generate">{{ composerMode === 'opening' ? '生成开篇' : composerMode === 'branch' ? '创建新分支' : '续写主线' }}</button>
             <button v-if="activeChapter" type="button" class="btn btn-ghost btn-block" :disabled="novel.is_generating" @click="regenerate">重生成当前章节</button>
             <button type="button" class="text-button" :disabled="optionsLoading || novel.is_generating" @click="suggest">{{ optionsLoading ? '正在构思…' : '让 AI 提供三个方向' }}</button>
           </div>
@@ -275,6 +333,6 @@ onUnmounted(() => clearInterval(timer))
     </div>
 
     <div v-if="isTreeOpen || isComposerOpen" class="workspace-backdrop" @click="isTreeOpen = false; isComposerOpen = false" />
-    <nav class="mobile-story-nav mobile-only" aria-label="移动端故事操作"><button type="button" @click="isTreeOpen = true">目录</button><button type="button" class="mobile-story-nav__primary" @click="isComposerOpen = true">续写故事</button><button type="button" @click="sideTab = 'cast'; isComposerOpen = true">角色</button></nav>
+    <nav class="mobile-story-nav mobile-only" aria-label="移动端故事操作"><button type="button" @click="isTreeOpen = true">目录</button><button type="button" class="mobile-story-nav__primary" @click="isComposerOpen = true">{{ primaryNextChapter ? '新建分支' : '续写主线' }}</button><button type="button" @click="sideTab = 'cast'; isComposerOpen = true">角色</button></nav>
   </div>
 </template>

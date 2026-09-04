@@ -4,6 +4,7 @@ import StoryTreeNode from './StoryTreeNode.vue'
 defineProps({
   nodes: { type: Array, default: () => [] },
   activeId: { type: [Number, null], default: null },
+  activePathIds: { type: Array, default: () => [] },
 })
 defineEmits(['select'])
 </script>
@@ -16,7 +17,9 @@ defineEmits(['select'])
       :key="node.id"
       :node="node"
       :active-id="activeId"
+      :active-path-ids="activePathIds"
       :depth="0"
+      :is-in-branch="false"
       @select="$emit('select', $event)"
     />
   </nav>

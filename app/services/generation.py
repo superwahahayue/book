@@ -131,13 +131,15 @@ class GenerationManager:
                     raise ValueError("已有开篇节点,请从已有节点分叉生成")
 
             path = self._path_to(list(novel.chapters), parent)
-            sibling_count = sum(
-                1
-                for c in novel.chapters
-                if (c.parent_id == parent_id)
-                or (c.parent_id is None and parent_id is None)
-            )
-            node_label = "开篇" if parent is None else f"分支{sibling_count + 1}"
+            siblings = [c for c in novel.chapters if c.parent_id == parent_id]
+            is_primary = parent is not None and not any(c.is_primary for c in siblings)
+            if parent is None:
+                node_label = "开篇"
+            elif is_primary:
+                node_label = f"第{len(path) + 1}章"
+            else:
+                branch_number = sum(1 for c in siblings if not c.is_primary) + 1
+                node_label = f"分支{branch_number}"
             next_index = (max((c.index for c in novel.chapters), default=0) or 0) + 1
 
             characters = list(novel.characters)
@@ -186,6 +188,7 @@ class GenerationManager:
                 content=body,
                 summary=chapter_summary,
                 plot_directive=plot_directive.strip(),
+                is_primary=is_primary,
                 is_ending=False,
             )
             db.add(chapter)

@@ -25,6 +25,9 @@ class Novel(Base):
     __tablename__ = "novels"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    owner_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     title: Mapped[str] = mapped_column(String(255))
     genre: Mapped[str] = mapped_column(String(255), default="")
@@ -68,6 +71,7 @@ class Novel(Base):
         cascade="all, delete-orphan",
         order_by="Relation.id",
     )
+    owner: Mapped["User | None"] = relationship(back_populates="novels")
 
     @property
     def chapter_count(self) -> int:
@@ -76,6 +80,35 @@ class Novel(Base):
     @property
     def effective_world(self) -> str:
         return (self.world_setting or self.settings or "").strip()
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(512))
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+
+    novels: Mapped[list[Novel]] = relationship(back_populates="owner")
+    sessions: Mapped[list["AuthSession"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+
+    user: Mapped[User] = relationship(back_populates="sessions")
 
 
 class Character(Base):
@@ -145,6 +178,9 @@ class Chapter(Base):
     content: Mapped[str] = mapped_column(Text, default="")
     summary: Mapped[str] = mapped_column(Text, default="")
     plot_directive: Mapped[str] = mapped_column(Text, default="")
+    # The default continuation among a chapter's children. Alternative siblings
+    # remain available as branches.
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
     is_ending: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 

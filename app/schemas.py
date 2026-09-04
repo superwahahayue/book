@@ -6,6 +6,19 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class AuthCredentials(BaseModel):
+    email: str = Field(min_length=3, max_length=255)
+    password: str = Field(min_length=8, max_length=255)
+
+
+class UserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    is_admin: bool
+
+
 # ── Characters ──────────────────────────────────────────────
 
 
@@ -92,6 +105,7 @@ class ChapterRead(BaseModel):
     content: str
     summary: str
     plot_directive: str
+    is_primary: bool
     is_ending: bool
     created_at: datetime
 
@@ -101,6 +115,7 @@ class ChapterTreeNode(BaseModel):
     parent_id: int | None
     title: str | None
     plot_directive: str
+    is_primary: bool
     is_ending: bool
     summary: str
     created_at: datetime
