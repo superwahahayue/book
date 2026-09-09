@@ -16,7 +16,10 @@ export default defineConfig({
     port: 5288,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // On Windows, Node may resolve localhost to IPv6 (::1), while
+        // Uvicorn's default development listener is IPv4 (127.0.0.1).
+        // Pin the proxy to IPv4 so /api works without requiring --host ::.
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },

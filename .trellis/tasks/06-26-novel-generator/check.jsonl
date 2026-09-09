@@ -1,1 +1,5 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file":".trellis/spec/backend/index.md","reason":"Review backend changes against the project layer guidelines."}
+{"file":".trellis/spec/backend/authentication-guidelines.md","reason":"Verify that new source/comic data and images cannot bypass owner checks."}
+{"file":".trellis/spec/frontend/index.md","reason":"Review the import/style/comic UI additions."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Check multipart, database, API, background-job, and UI contract consistency."}
+{"file":".trellis/tasks/06-26-novel-generator/research/import-and-comic-feasibility.md","reason":"Validate that image and upload constraints have been respected."}

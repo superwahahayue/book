@@ -147,6 +147,47 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .tabs, .composer-tabs { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-subtle); }
 .tab, .composer-tabs button { flex: 1; border: 0; border-radius: 6px; padding: 7px 9px; background: transparent; color: var(--ink-soft); cursor: pointer; font-size: 13px; font-weight: 650; }
 .tab.active, .composer-tabs button.active { background: var(--surface); box-shadow: var(--shadow-sm); color: var(--ink); }
+.file-input { display: block; width: 100%; border: 1px dashed var(--line-strong); border-radius: 9px; padding: 9px; background: var(--surface-subtle); color: var(--ink-soft); cursor: pointer; font-size: 13px; }
+.file-input:hover:not(:disabled), .file-input:focus { border-color: var(--primary); background: var(--primary-soft); }
+.file-input:disabled { cursor: not-allowed; opacity: .55; }
+.import-options { margin: -2px 0 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 12px 0 0; }
+.import-options summary, .style-reference-card__upload summary { color: var(--ink-soft); cursor: pointer; font-size: 13px; font-weight: 650; }
+.import-status { margin-top: 16px; }
+.import-status h2, .comic-options h2, .comic-result h2 { margin-bottom: 4px; font-family: var(--font-reading); font-size: 20px; letter-spacing: .025em; }
+.import-status__eyebrow, .style-reference-card__eyebrow, .comic-result__eyebrow { margin: 0 0 3px; color: var(--primary); font-size: 10px; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+.import-status__error { width: 100%; margin: 14px 0 0; }
+
+/* Source-style selection in the new-story form. */
+.style-reference-card { margin: 4px 0 16px; border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--line)); border-radius: 10px; padding: 15px; background: linear-gradient(135deg, color-mix(in srgb, var(--primary-soft) 60%, var(--surface)), var(--surface)); }
+.style-reference-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.style-reference-card h3 { margin: 0; font-size: 15px; letter-spacing: -.01em; }
+.style-reference-card > .muted { margin: 8px 0 14px; line-height: 1.65; }
+.style-reference-card__upload { margin-top: 13px; border-top: 1px solid var(--line); padding-top: 12px; }
+.checkbox-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 11px; color: var(--ink-soft); font-size: 12px; line-height: 1.5; cursor: pointer; }
+.checkbox-row input { width: 16px; height: 16px; flex: 0 0 auto; margin: 1px 0 0; accent-color: var(--primary); }
+.style-upload-status { display: grid; gap: 8px; margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line); }
+.style-upload-status__error, .comic-panel__error { color: var(--danger); font-size: 12px; line-height: 1.55; }
+.style-profile-preview { margin: 10px 0 0; border-left: 2px solid var(--primary); padding: 7px 10px; background: color-mix(in srgb, var(--primary-soft) 50%, var(--surface)); color: var(--ink-soft); font-size: 12px; line-height: 1.65; white-space: pre-wrap; }
+
+/* One chapter becomes a small, independently rendered comic. */
+.comic-page { max-width: 1160px; }
+.comic-options { max-width: 760px; }
+.comic-options > .row { margin-bottom: 18px; }
+.comic-options .field:last-of-type { margin-bottom: 16px; }
+.comic-result { margin-top: 28px; }
+.comic-result__head { margin-bottom: 16px; }
+.comic-result__head > div { min-width: 0; }
+.comic-waiting { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 120px; color: var(--ink-soft); text-align: center; }
+.comic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.comic-panel { overflow: hidden; }
+.comic-panel__media { position: relative; aspect-ratio: 16 / 9; background: var(--surface-subtle); }
+.comic-panel__media img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.comic-panel__placeholder { display: grid; width: 100%; height: 100%; place-items: center; color: var(--ink-faint); font-size: 13px; }
+.comic-panel__body { padding: 14px; }
+.comic-panel__body h3 { margin: 0; font-size: 15px; }
+.comic-panel__body > p { margin: 10px 0 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; white-space: pre-wrap; }
+.comic-panel__dialogue { border-left: 2px solid var(--primary); padding-left: 9px; color: var(--ink) !important; font-family: var(--font-reading); }
+.comic-panel__body .btn { margin-top: 12px; }
 
 /* Novel workspace */
 .novel-shell { min-width: 0; padding-bottom: 12px; }
@@ -253,6 +294,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
   .desktop-only { display: none; }
   .page-head { margin-bottom: 20px; }
   .book-grid { grid-template-columns: 1fr; gap: 12px; }
+  .comic-grid { grid-template-columns: 1fr; }
   .field-grid { grid-template-columns: 1fr; gap: 0; }
   .novel-toolbar { display: block; align-items: flex-start; margin-bottom: 16px; }
   .novel-toolbar h1 { max-width: 100%; font-size: 25px; white-space: normal; }

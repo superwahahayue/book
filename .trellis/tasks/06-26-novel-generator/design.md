@@ -123,3 +123,102 @@ chapter 1 is generated via the same flow (running_summary empty initially).
 - Config via `.env` / env vars; sensible defaults.
 - Run: `uvicorn app.main:app`. README documents Ollama prerequisite.
 - No rollback migrations needed for greenfield; schema created on startup (or Alembic optional, out of scope for MVP).
+
+## Imported sources, style references, and comics (2026-09 extension)
+
+### Shared source-document boundary
+
+Imported text is a user-owned resource, not a string on `Novel`. A new
+`SourceDocument` stores the normalized text, original file metadata, processing
+state/error, and derived `story_profile` / `style_profile`. A `NovelSourceReference`
+association identifies whether a document is the novel's continuation source or
+a style reference. The target `Novel` also keeps `style_profile` as a snapshot:
+the resulting work must not change when a reusable source document is removed
+or re-analysed.
+
+```
+UploadFile (multipart)
+  -> import_service.parse_upload()
+  -> SourceDocument(status=processing)
+  -> worker: split chapters + derive bounded cross-book continuity profile
+  -> Novel + primary Chapter path + SourceReference(continuation)
+  -> existing GenerationManager continues from the final chapter
+
+Style upload
+  -> SourceDocument(status=processing)
+  -> worker: build style-profile from bounded samples
+  -> CreateView selects ready document
+  -> Novel.style_profile snapshot
+  -> prompts._world_block() includes only the profile
+```
+
+The API validates file name, extension, byte size and text content at the
+upload boundary. The parser accepts text/Markdown and DOCX only; DOCX ZIP
+member count, expansion ratio, expanded byte size, extracted character count
+and chapter count are bounded before persistence. CPU-heavy parsing is served from FastAPI's
+worker pool, not the ASGI event loop. All access to a source document is
+filtered by its owner; source text is treated as untrusted input in model
+prompts.
+
+Novel continuation deliberately does not depend on an extra model request:
+the imported source yields a 6k-character continuity map sampled across the
+whole chapter range, plus per-chapter summaries and recent-path summaries.
+This keeps offline imports usable and preserves middle-book events within a
+bounded prompt budget. Style references remain model-analyzed from a bounded
+sample because their purpose is high-level writing characteristics.
+
+### Comic boundary
+
+The existing `LLMProvider` remains text-only. A dedicated Antigravity image
+client calls the OpenAI-compatible `/v1/images/generations` endpoint with the
+configured Gemini proxy URL/key. The comic job first asks the selected text
+provider for a strict JSON storyboard, then processes panels sequentially to
+avoid image-model quota bursts. A bounded global admission slot rejects extra
+comic jobs rather than creating unbounded proxy work; each novel may have only
+one active comic job.
+
+```
+Accessible Novel + selected Chapter
+  -> Comic(status=storyboarding)
+  -> text provider -> ComicPanel records (4–8)
+  -> Comic(status=rendering)
+  -> image provider -> /app/data/comics/<comic>/<panel>.png
+  -> Comic(status=ready | failed)
+  -> authorized GET /api/comic-panels/<id>/image -> FileResponse
+```
+
+`Comic` stores the source chapter, visual style, image model, aspect ratio,
+quality, status and last error. `ComicPanel` stores ordering, storyboard text,
+narration/dialogue, image prompt, image path, status and panel error. A panel
+failure does not discard successfully rendered earlier panels. It can be
+retried independently later.
+
+### Cross-layer API contracts
+
+- `POST /api/imports/novel` and `POST /api/style-references` accept multipart
+  `file` plus form metadata and return a processing resource immediately.
+- `GET /api/imports/{id}` / `GET /api/style-references` expose readiness,
+  derived profiles, errors and the resulting novel id where applicable.
+- `POST /api/novels` accepts an optional ready `style_reference_id`; the service
+  copies the profile to the created novel after owner validation.
+- `POST /api/novels/{id}/comics` creates a background comic job for one chapter.
+  `GET /api/comics/{id}` returns the comic and its ordered panels.
+- `DELETE /api/source-documents/{id}` removes retained raw source text and its
+  reusable links without deleting a novel that already copied the required
+  chapter data/style snapshot.
+- Every document, novel, comic, panel and image endpoint resolves ownership
+  before exposing data; images are not served from a public static mount.
+
+### Operational constraints
+
+- `python-multipart` and `python-docx` parse uploads; `httpx` calls the image
+  endpoint. Both container Nginx and the outer reverse proxy need the same
+  `client_max_body_size` setting as the backend limit.
+- Large analysis runs in bounded daemon-worker slots and use their own
+  persistent `status` fields. They never overload `Novel.is_generating`, which
+  is reserved for chapter writing. A process restart marks unfinished work as
+  failed instead of leaving the UI polling forever.
+- Image errors (quota, 429/503, unsupported image account) persist a readable
+  error. The user can still read the storyboard and successful panels.
+- Raw source prose can be deleted independently. Deleting a novel cleans its
+  matching `MEDIA_DIR/comics/<job-id>` folders after database deletion.

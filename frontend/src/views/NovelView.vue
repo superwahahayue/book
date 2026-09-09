@@ -115,6 +115,14 @@ function selectNode(id) {
 
 function applyOption(option) { directive.value = option }
 
+function openComic() {
+  if (!activeChapter.value) return
+  router.push({
+    name: 'comic',
+    params: { novelId: props.id, chapterId: activeChapter.value.id },
+  })
+}
+
 async function suggest() {
   optionsLoading.value = true
   actionErr.value = ''
@@ -274,6 +282,7 @@ onUnmounted(() => clearInterval(timer))
             </div>
             <div class="chapter-actions">
               <button v-if="primaryNextChapter" type="button" class="text-button" @click="selectNode(primaryNextChapter.id)">阅读下一章 →</button>
+              <button type="button" class="text-button" @click="openComic">生成本章漫画</button>
               <button v-if="activeChapter.parent_id != null && !activeChapter.is_primary" type="button" class="text-button" @click="setPrimary">设为主线下一章</button>
               <button type="button" class="text-button" @click="toggleEnding">{{ activeChapter.is_ending ? '取消结局' : '标为结局' }}</button>
               <button type="button" class="text-button text-button--danger" @click="deleteNode">删除</button>

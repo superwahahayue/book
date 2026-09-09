@@ -48,6 +48,7 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     migrate_schema()
     _reset_stale_generating()
+    _reset_stale_background_jobs()
 
 
 def _table_columns(table: str) -> set[str]:
@@ -89,6 +90,9 @@ def migrate_schema() -> None:
                     "AND settings IS NOT NULL AND settings != ''"
                 )
             )
+        if "style_profile" not in novel_cols:
+            conn.execute(text("ALTER TABLE novels ADD COLUMN style_profile TEXT DEFAULT ''"))
+            logger.info("Migrated: novels.style_profile")
 
     if _table_exists("chapters"):
         ch_cols = _table_columns("chapters")
@@ -218,6 +222,47 @@ def _reset_stale_generating() -> None:
         return
     with engine.begin() as conn:
         conn.execute(text("UPDATE novels SET is_generating = 0 WHERE is_generating = 1"))
+
+
+def _reset_stale_background_jobs() -> None:
+    """Mark daemon-thread work interrupted by a process restart as retryable.
+
+    Imports and comic rendering use in-process workers.  Those threads cannot
+    survive a deployment/restart, so keeping their prior `processing` state
+    would make the UI poll forever.  The original source and generated panels
+    remain on disk/in SQLite; only the incomplete operation is marked failed.
+    """
+    has_source_documents = _table_exists("source_documents")
+    has_comic_panels = _table_exists("comic_panels")
+    has_comics = _table_exists("comics")
+    with engine.begin() as conn:
+        if has_source_documents:
+            conn.execute(
+                text(
+                    "UPDATE source_documents "
+                    "SET status = 'failed', "
+                    "error = '服务重启导致导入或文风分析中断，请重新提交该任务。' "
+                    "WHERE status IN ('queued', 'processing', 'analyzing', 'importing')"
+                )
+            )
+        if has_comic_panels:
+            conn.execute(
+                text(
+                    "UPDATE comic_panels "
+                    "SET status = 'failed', "
+                    "error = '服务重启导致图片生成中断，请重试这一格。' "
+                    "WHERE status IN ('queued', 'rendering')"
+                )
+            )
+        if has_comics:
+            conn.execute(
+                text(
+                    "UPDATE comics "
+                    "SET status = 'failed', "
+                    "last_error = '服务重启导致漫画生成中断，请重新生成或重试失败分镜。' "
+                    "WHERE status IN ('queued', 'storyboarding', 'rendering')"
+                )
+            )
 
 
 def get_db() -> Iterator[Session]:

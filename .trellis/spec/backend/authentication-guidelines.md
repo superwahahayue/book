@@ -25,6 +25,10 @@
   administrator may access any novel.
 - Character, relation, and chapter endpoints must authorize via their parent
   novel, not merely by receiving a resource ID.
+- Source-document endpoints must authorize with `source_document.owner_id`.
+  Comic, panel, and generated-image endpoints must authorize through
+  `comic.novel_id` and the parent novel; never expose `MEDIA_DIR` through a
+  public static mount.
 - Return 404, not 403, when an ordinary user requests another user's resource
   so resource existence is not disclosed.
 - New novels always receive the authenticated creator as `owner_id`.

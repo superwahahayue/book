@@ -6,6 +6,17 @@ const http = axios.create({
   withCredentials: true,
 })
 
+function upload(path, file, fields = {}) {
+  const form = new FormData()
+  form.append('file', file)
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== undefined && value !== null && value !== '') {
+      form.append(key, String(value))
+    }
+  }
+  return http.post(path, form).then((r) => r.data)
+}
+
 export const api = {
   register: (data) => http.post('/auth/register', data).then((r) => r.data),
   login: (data) => http.post('/auth/login', data).then((r) => r.data),
@@ -17,6 +28,16 @@ export const api = {
   createNovel: (data) => http.post('/novels', data).then((r) => r.data),
   updateNovel: (id, data) => http.patch(`/novels/${id}`, data).then((r) => r.data),
   deleteNovel: (id) => http.delete(`/novels/${id}`),
+
+  importNovel: (file, fields) => upload('/imports/novel', file, fields),
+  getImport: (id) => http.get(`/imports/${id}`).then((r) => r.data),
+  deleteSourceDocument: (id) => http.delete(`/source-documents/${id}`),
+  listStyleReferences: () => http.get('/style-references').then((r) => r.data),
+  createStyleReference: (file, fields) => upload('/style-references', file, fields),
+
+  createComic: (novelId, data) => http.post(`/novels/${novelId}/comics`, data).then((r) => r.data),
+  getComic: (id) => http.get(`/comics/${id}`).then((r) => r.data),
+  retryComicPanel: (id) => http.post(`/comic-panels/${id}/retry`).then((r) => r.data),
 
   listCharacters: (novelId) => http.get(`/novels/${novelId}/characters`).then((r) => r.data),
   createCharacter: (novelId, data) =>

@@ -78,3 +78,44 @@ Generation: Ollama (local). UI: Jinja2 + minimal JS.
 ## Notes
 - MVP keeps Alembic out; schema via create_all. Add migrations later if needed.
 - Default chapter length and model name are config-driven for easy tuning.
+
+## 10. Imported sources, reference style, and comics (2026-09)
+
+### Persistence and configuration
+
+- [x] Add upload/image settings and dependencies (`python-multipart`,
+      `python-docx`, `httpx`).
+- [x] Add `SourceDocument`, `NovelSourceReference`, `Comic`, and `ComicPanel`
+      models plus idempotent SQLite migration support for the `Novel` style
+      profile snapshot.
+- [x] Write source/comic content under the existing mounted data directory;
+      never place them in the repository or a public static directory.
+
+### Services and provider boundaries
+
+- [x] Implement text/DOCX parsing, heading splitting, text normalization and
+      bounded background source analysis.
+- [x] Import a novel into a linear primary chapter path and populate per-chapter
+      summaries so `GenerationManager` can continue it immediately.
+- [x] Extract an original-writing style profile from bounded source samples;
+      include the profile (not raw text) in chapter prompts.
+- [x] Add a separate Antigravity image provider and comic service: storyboard
+      JSON -> sequential panel generation -> durable image files/statuses.
+
+### API and UI
+
+- [x] Add authenticated upload/status/list APIs, style-reference selection when
+      creating a novel, comic job/panel/retry APIs, and authorized image reads.
+- [x] Add a dedicated import page from the library, a source-reference step in
+      the creation flow, and comic creation/viewing from a selected chapter.
+- [x] Add client-side multipart handling and polling for import/style/comic
+      statuses; keep existing chapter polling behavior unchanged.
+
+### Validation and deployment
+
+- [x] Test valid and invalid TXT/MD/DOCX imports, primary-path continuation,
+      source ownership checks, and style-profile prompt composition.
+- [x] Test storyboard parsing and image-response decoding with a mocked image
+      client, including one failed panel and retry behavior.
+- [x] Build the Vue app and import the FastAPI app; document new environment
+      variables and upload-size settings in README/deployment docs.

@@ -1,1 +1,5 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file":".trellis/spec/backend/index.md","reason":"Backend conventions and available guideline routing for the new API, ORM, service, and provider layers."}
+{"file":".trellis/spec/backend/authentication-guidelines.md","reason":"Existing user/resource access model that imported documents, comics, panels, and image reads must preserve."}
+{"file":".trellis/spec/frontend/index.md","reason":"Frontend guidelines for new import, creation, and comic UI flows."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"The feature spans multipart upload, SQLite persistence, background jobs, API contracts, and Vue rendering."}
+{"file":".trellis/tasks/06-26-novel-generator/research/import-and-comic-feasibility.md","reason":"Verified project findings and Antigravity image-endpoint constraints for implementation."}

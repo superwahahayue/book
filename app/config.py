@@ -43,6 +43,24 @@ class Settings(BaseSettings):
     temperature: float = 0.9
     request_timeout: int = 600
 
+    # Imported source documents
+    upload_max_bytes: int = 20 * 1024 * 1024
+    source_analysis_max_chars: int = 30000
+    source_max_extracted_chars: int = 2_000_000
+    source_max_chapters: int = 2_000
+    source_docx_max_uncompressed_bytes: int = 40 * 1024 * 1024
+    source_parse_max_concurrency: int = 2
+    import_worker_max_concurrency: int = 2
+    style_analysis_max_concurrency: int = 1
+
+    # Comic panels generated through the Antigravity OpenAI-compatible image API.
+    media_dir: str = "./data"
+    comic_default_image_model: str = "gemini-3-pro-image"
+    comic_default_aspect_ratio: str = "16:9"
+    comic_default_quality: str = "standard"
+    comic_default_panel_count: int = 6
+    comic_max_concurrent_jobs: int = 1
+
     # CORS: comma-separated origins allowed to call the API (Vite dev server).
     cors_origins: str = "http://localhost:5288,http://127.0.0.1:5288"
 

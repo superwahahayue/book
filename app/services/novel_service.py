@@ -7,7 +7,15 @@ import threading
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Chapter, Character, Novel, Relation
+from app.models import (
+    Chapter,
+    Character,
+    Comic,
+    Novel,
+    NovelSourceReference,
+    Relation,
+    SourceDocument,
+)
 from app.schemas import (
     CharacterCreate,
     CharacterSeed,
@@ -49,7 +57,12 @@ def get_novel(db: Session, novel_id: int) -> Novel | None:
     return db.scalars(_novel_query().where(Novel.id == novel_id)).first()
 
 
-def create_novel(db: Session, data: NovelCreate, owner_id: int) -> Novel:
+def create_novel(
+    db: Session,
+    data: NovelCreate,
+    owner_id: int,
+    style_reference: SourceDocument | None = None,
+) -> Novel:
     world = data.world_setting or data.settings or ""
     novel = Novel(
         owner_id=owner_id,
@@ -59,6 +72,7 @@ def create_novel(db: Session, data: NovelCreate, owner_id: int) -> Novel:
         settings=data.settings or world,
         world_setting=world,
         style=data.style,
+        style_profile=(style_reference.style_profile if style_reference else ""),
         outline=data.outline,
         provider=data.provider,
         model=data.model,
@@ -67,6 +81,15 @@ def create_novel(db: Session, data: NovelCreate, owner_id: int) -> Novel:
     )
     db.add(novel)
     db.flush()
+
+    if style_reference is not None:
+        db.add(
+            NovelSourceReference(
+                novel_id=novel.id,
+                source_document_id=style_reference.id,
+                usage="style_reference",
+            )
+        )
 
     for i, seed in enumerate(data.characters or []):
         db.add(_character_from_seed(novel.id, seed, i))
@@ -116,8 +139,18 @@ def update_novel(db: Session, novel: Novel, data: NovelUpdate) -> Novel:
 
 
 def delete_novel(db: Session, novel: Novel) -> None:
+    # ORM/SQLite cascades remove the job rows but cannot remove panel files.
+    # Capture trusted job IDs before committing, then clean the corresponding
+    # MEDIA_DIR/comics/<id> directories only after the database succeeds.
+    comic_ids = list(
+        db.scalars(select(Comic.id).where(Comic.novel_id == novel.id))
+    )
     db.delete(novel)
     db.commit()
+    if comic_ids:
+        from app.services.comic_service import remove_comic_media
+
+        remove_comic_media(comic_ids)
 
 
 # ── Characters ──────────────────────────────────────────────

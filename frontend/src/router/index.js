@@ -6,7 +6,19 @@ const routes = [
   { path: '/register', name: 'register', component: () => import('@/views/RegisterView.vue'), meta: { guestOnly: true } },
   { path: '/', name: 'library', component: () => import('@/views/LibraryView.vue'), meta: { requiresAuth: true } },
   { path: '/create', name: 'create', component: () => import('@/views/CreateView.vue'), meta: { requiresAuth: true } },
+  { path: '/import', name: 'import-novel', component: () => import('@/views/ImportNovelView.vue'), meta: { requiresAuth: true } },
   { path: '/novels/:id', name: 'novel', component: () => import('@/views/NovelView.vue'), props: true, meta: { requiresAuth: true } },
+  {
+    path: '/novels/:novelId/chapters/:chapterId/comic',
+    name: 'comic',
+    component: () => import('@/views/ComicView.vue'),
+    props: (route) => ({
+      novelId: route.params.novelId,
+      chapterId: route.params.chapterId,
+      comicId: route.query.comic || null,
+    }),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({

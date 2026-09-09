@@ -173,6 +173,7 @@ class NovelCreate(BaseModel):
     outline: str = ""
     provider: str | None = None
     model: str | None = None
+    style_reference_id: int | None = None
     characters: list[CharacterSeed] = Field(default_factory=list)
 
 
@@ -209,6 +210,7 @@ class NovelDetail(NovelSummary):
     world_setting: str
     settings: str
     style: str
+    style_profile: str = ""
     outline: str
     characters: list[CharacterRead] = Field(default_factory=list)
     relations: list[RelationRead] = Field(default_factory=list)
@@ -221,3 +223,68 @@ class ProviderInfo(BaseModel):
     default_model: str
     available: bool
     models: list[str] = Field(default_factory=list)
+
+
+# ── Imported source documents ──────────────────────────────
+
+
+class SourceDocumentRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    kind: str
+    title: str
+    original_filename: str
+    mime_type: str
+    size_bytes: int
+    status: str
+    error: str | None
+    story_profile: str
+    style_profile: str
+    result_novel_id: int | None
+    created_at: datetime
+    updated_at: datetime
+
+
+# ── Comics ─────────────────────────────────────────────────
+
+
+class ComicCreate(BaseModel):
+    chapter_id: int
+    visual_style: str = "彩色日漫风，电影感分镜，角色形象保持一致"
+    image_model: str | None = None
+    aspect_ratio: str | None = None
+    quality: str | None = None
+    panel_count: int | None = Field(default=None, ge=4, le=8)
+
+
+class ComicPanelRead(BaseModel):
+    id: int
+    comic_id: int
+    panel_index: int
+    scene_description: str
+    narration: str
+    dialogue: str
+    image_prompt: str
+    image_url: str | None = None
+    status: str
+    error: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ComicRead(BaseModel):
+    id: int
+    novel_id: int
+    source_chapter_id: int | None
+    title: str
+    visual_style: str
+    image_model: str
+    aspect_ratio: str
+    quality: str
+    panel_count: int
+    status: str
+    last_error: str | None
+    created_at: datetime
+    updated_at: datetime
+    panels: list[ComicPanelRead] = Field(default_factory=list)

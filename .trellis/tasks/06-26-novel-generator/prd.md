@@ -91,3 +91,62 @@ on existing content, and provides a **web interface** for reading and managing m
 ## Open Questions
 
 - None blocking. (Front-end approach — server-rendered vs SPA — decided in design.md.)
+
+## Imported-source and comic extension (2026-09)
+
+### Goal
+
+Let an authenticated user bring an existing novel into the product in three
+connected ways: continue it as a story tree, use its high-level writing
+characteristics as a reference for an original new story, and turn selected
+chapters into an illustrated comic storyboard.
+
+### Confirmed scope for the first release
+
+- Import `.txt`, `.md`, and `.docx` files up to a configurable size limit.
+- Detect common Chinese chapter headings (`第…章`, Markdown headings); fall back
+  to one chapter when no headings are found.
+- Import chapters as the primary linear path of a normal `Novel`, so the
+  existing director/continuation flow continues from its last chapter.
+- Store the source document, a bounded cross-book continuity profile, and a
+  model-generated style profile where requested; never put an entire imported
+  book into every generation prompt. The continuity profile samples the full
+  chapter range so middle-plot developments remain available offline.
+- A new story may select a ready style reference. Its profile is copied onto
+  the new novel as a snapshot and guides future generation alongside the
+  user's own instructions.
+- Style analysis describes broad attributes (viewpoint, rhythm, dialogue,
+  imagery, emotional pacing, and avoidances) and asks the model for original
+  output rather than verbatim or near-verbatim reproduction.
+- Generate a real, illustrated comic for one selected chapter at a time:
+  first produce a 4–8 panel storyboard, then generate one image per panel.
+  Default output is a colorful anime-inspired 16:9 panel at standard quality.
+- Image files remain in the mounted application data directory and are served
+  only through owner-authorized API endpoints.
+
+### Acceptance Criteria
+
+- [ ] A user can upload a valid `.txt`, `.md`, or `.docx` file, see progress,
+      and open the resulting imported novel when processing finishes.
+- [ ] Imported multi-chapter content becomes one primary chapter path; its last
+      node can be continued with the existing "续写故事" action.
+- [ ] The import workflow returns a clear per-file error for unsupported files,
+      invalid encodings, unsafe/oversized content, empty content, or processing
+      failures. Style-reference analysis separately reports model failures.
+- [ ] A user can upload an authorized reference text, wait for style analysis,
+      and choose it from the new-story form.
+- [ ] The selected style profile is persisted on the created novel and is used
+      by future chapter prompts even if the original reference is later removed.
+- [ ] A user can request a comic from an accessible chapter, review generated
+      panels, and receive individual image/error status without blocking the UI.
+- [ ] Comic images survive a container recreation because they are written
+      below the mounted `data/` directory; another user cannot read them.
+- [ ] A user can erase retained source prose without deleting an already-created
+      novel; deleting a novel also removes its generated panel files.
+
+### Explicit non-goals for this release
+
+- EPUB/PDF parsing, OCR, and automatic whole-book comic conversion.
+- Exact imitation of an identified living author's unique style.
+- Cross-panel character-reference image editing; this can be added later using
+  Antigravity's image-edit endpoint.

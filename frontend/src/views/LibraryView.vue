@@ -51,7 +51,10 @@ onUnmounted(() => clearInterval(timer))
         <h1 class="hero-title"><span class="spark">✨</span> 我的创作库</h1>
         <p class="page-lead">像 galgame 一样导演每一条分支剧情</p>
       </div>
-      <RouterLink to="/create" class="btn btn-primary">＋ 开启新故事</RouterLink>
+      <div class="row row-wrap gap-sm">
+        <RouterLink to="/import" class="btn btn-ghost">⇧ 导入小说</RouterLink>
+        <RouterLink to="/create" class="btn btn-primary">＋ 开启新故事</RouterLink>
+      </div>
     </div>
 
     <div v-if="loading" class="book-grid">
@@ -68,7 +71,10 @@ onUnmounted(() => clearInterval(timer))
       <div class="empty-state">
         <span class="emoji">🌸</span>
         <p>还没有故事哦，去创造第一个世界吧</p>
-        <RouterLink to="/create" class="btn btn-primary mt-md">开始创作</RouterLink>
+        <div class="row row-wrap gap-sm mt-md">
+          <RouterLink to="/import" class="btn btn-ghost">导入已有小说</RouterLink>
+          <RouterLink to="/create" class="btn btn-primary">开始创作</RouterLink>
+        </div>
       </div>
     </div>
 
